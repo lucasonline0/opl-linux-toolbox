@@ -1,0 +1,94 @@
+<div class="dashboard page fade-in">
+  <div class="dashboard-scroll">
+    <header class="dashboard-heading">
+      <div>
+        <span class="page-kicker">Your PlayStation library</span>
+        <h1 class="section-title">Library overview</h1>
+        <p class="page-subtitle">Games, artwork and storage — all in one calm workspace.</p>
+      </div>
+      <div class="dashboard-heading-actions">@if (library.hasCurrentDirectory$ | async) {<a routerLink="/import" class="btn btn-primary btn-sm"><i-lucide name="plus" size="16"></i-lucide> Import games</a>}</div>
+    </header>
+
+    @if (library.storage$ | async; as storage) {
+      <section class="dashboard-grid top-grid">
+        <article class="hero-card glass-medium" [class.has-art]="heroAsset">
+          @if (heroAsset) { <div class="hero-art" [style.background-image]="'url(' + artDataUrl(heroAsset) + ')'" aria-hidden="true"></div> }
+          <div class="hero-glow"></div>
+          <div class="hero-content">
+            <span class="hero-label">{{ heroGame?.system === 'PS1' ? 'PlayStation collection' : 'PlayStation 2 collection' }}</span>
+            <h2><strong>{{ ps2 }}</strong> {{ ps2 === 1 ? 'game' : 'games' }} ready to play</h2>
+            <p>{{ heroGame ? (heroGame.title || heroGame.gameId) : 'Your library is connected and ready.' }}</p>
+            <div class="hero-actions"><a routerLink="/library" class="hero-button">Explore library <i-lucide name="arrow-up-right" size="15"></i-lucide></a><a routerLink="/import" class="hero-link">Add games</a></div>
+          </div>
+          <div class="quick-metrics">
+            <div><small>PS2</small><strong>{{ ps2 }}</strong></div>
+            <div><small>PS1</small><strong>{{ ps1 }}</strong></div>
+            <div><small>Apps</small><strong>{{ apps }}</strong></div>
+            <div><small>UL</small><strong>{{ ul }}</strong></div>
+          </div>
+        </article>
+
+        <article class="storage-card glass-medium">
+          <div class="card-heading"><div><span class="card-eyebrow">Storage</span><h3>{{ storage.name }}</h3></div><i-lucide name="hard-drive" size="18"></i-lucide></div>
+          <div class="storage-ring" [style.--usage]="percent(storage)">
+            <div><strong>{{ percent(storage) }}%</strong><span>used</span></div>
+          </div>
+          <div class="storage-numbers"><strong>{{ gb(storage.usedBytes) }} GB</strong><span>of {{ gb(storage.totalBytes) }} GB</span></div>
+          <div class="storage-foot"><span>{{ storage.filesystem }}</span><span>{{ gb(storage.freeBytes) }} GB free</span></div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid middle-grid">
+        <article class="spotlight-card glass-medium">
+          <div class="card-heading"><div><span class="card-eyebrow">In your library</span><h3>Collection spotlight</h3></div><a routerLink="/library" class="subtle-link">View all <i-lucide name="arrow-right" size="14"></i-lucide></a></div>
+          <div class="spotlight-list">
+            @for (game of showcaseGames; track game.path) {
+              <button class="spotlight-game" (click)="openGame(game)">
+                @if (coverFor(game); as cover) {<img [src]="artDataUrl(cover)" alt="" />} @else {<span class="mini-cover"><i-lucide name="disc-3" size="19"></i-lucide></span>}
+                <span><strong>{{ game.title || game.gameId }}</strong><small>{{ game.gameId }} · {{ game.format || game.extension }}</small></span>
+                <i-lucide name="chevron-right" size="15"></i-lucide>
+              </button>
+            } @empty {
+              <div class="inline-empty"><i-lucide name="gamepad-2" size="22"></i-lucide><span>No games found yet</span></div>
+            }
+          </div>
+        </article>
+
+        <div class="health-stack">
+          <article class="art-health glass-medium">
+            <div class="card-heading"><div><span class="card-eyebrow">Artwork</span><h3>Visual library</h3></div><div class="cover-stack">@for(game of gamesWithCovers.slice(0,3); track game.path){@if(coverFor(game);as cover){<img [src]="artDataUrl(cover)" alt=""/>}}</div></div>
+            <div class="health-number"><strong>{{ gamesWithArtwork }}</strong><span>/ {{ artworkEligible }} games with assets</span></div>
+            <div class="soft-progress"><span [style.width.%]="artworkPercent"></span></div>
+            <div class="health-foot"><span>{{ withoutCover }} without cover</span><a routerLink="/artwork">Find artwork</a></div>
+          </article>
+          <article class="maintenance-card glass-medium" [class.has-issues]="issues > 0">
+            <span class="health-icon"><i-lucide [name]="issues ? 'shield-alert' : 'shield-check'" size="19"></i-lucide></span>
+            <div><span class="card-eyebrow">Library health</span><h3>{{ issues ? issues + (issues === 1 ? ' issue found' : ' issues found') : 'Everything looks good' }}</h3><small>{{ issues ? 'Review before making repairs.' : 'No incomplete installs detected.' }}</small></div>
+            <a routerLink="/maintenance" class="icon-link"><i-lucide name="arrow-up-right" size="15"></i-lucide></a>
+          </article>
+        </div>
+      </section>
+
+      <section class="queue-card glass-medium">
+        <div class="queue-icon"><i-lucide name="circle-down" size="21"></i-lucide></div>
+        @if ((jobs.activeCount$ | async); as active) {
+          <div><span class="card-eyebrow">Import queue</span><h3>{{ active }} {{ active === 1 ? 'job' : 'jobs' }} in progress</h3><p>Safe copy and artwork tasks are running sequentially.</p></div>
+          <div class="queue-live"><span class="loading loading-spinner loading-sm"></span><span>Working safely</span></div>
+        } @else {
+          <div><span class="card-eyebrow">Import queue</span><h3>Ready to import</h3><p>Drop in ISO, ZSO, CUE/BIN, VCD or ELF files.</p></div>
+          <a routerLink="/import" class="queue-action">Import games <i-lucide name="arrow-right" size="15"></i-lucide></a>
+        }
+      </section>
+    } @else {
+      <section class="connect-hero glass-medium">
+        <div class="connect-copy"><span class="page-kicker">Welcome to OPL Linux</span><h2>Connect your OPL library</h2><p>Select a mounted drive, local folder or network share to start managing your collection safely.</p><button class="btn btn-primary" (click)="library.openAskDirectory()"><i-lucide name="folder-open" size="17"></i-lucide> Choose library</button></div>
+        <div class="connect-visual" aria-hidden="true"><span class="visual-orbit orbit-one"></span><span class="visual-orbit orbit-two"></span><span class="visual-disc"><i-lucide name="disc-3" size="54"></i-lucide></span><span class="floating-card one"><i-lucide name="image" size="16"></i-lucide></span><span class="floating-card two"><i-lucide name="shield-check" size="16"></i-lucide></span></div>
+      </section>
+      <section class="feature-strip">
+        <article class="glass-medium"><span><i-lucide name="disc-3" size="19"></i-lucide></span><div><strong>Every OPL format</strong><small>ISO · ZSO · UL · PS1 · Apps</small></div></article>
+        <article class="glass-medium"><span><i-lucide name="images" size="19"></i-lucide></span><div><strong>Complete artwork</strong><small>Automatic full asset discovery</small></div></article>
+        <article class="glass-medium"><span><i-lucide name="shield-check" size="19"></i-lucide></span><div><strong>Safe imports</strong><small>SHA-256 verification + rollback</small></div></article>
+      </section>
+    }
+  </div>
+</div>

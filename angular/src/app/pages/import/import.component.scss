@@ -56,3 +56,16 @@
   font-size: 0.68rem;
   color: oklch(85% 0.02 250 / 0.45);
 }
+
+.preflight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  padding: .75rem;
+  border-radius: .75rem;
+  background: rgba(117, 167, 255, .07);
+  border: 1px solid rgba(117, 167, 255, .15);
+}
+.preflight-grid div { display: flex; flex-direction: column; min-width: 0; }
+.preflight-grid span { color: rgba(245,246,248,.48); font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; }
+.preflight-grid strong { color: #f5f6f8; font-size: .78rem; overflow: hidden; text-overflow: ellipsis; }

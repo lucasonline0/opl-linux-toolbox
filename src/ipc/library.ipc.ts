@@ -6,7 +6,6 @@ import {
   checkOplStructure,
   createOplFolders,
   renameGamefile,
-  moveFile,
 } from "../services/library.service";
 import {
   resolveIsoGameId,
@@ -14,9 +13,11 @@ import {
   tryDeterminePs1GameIdFromHex,
   tryDeterminePs1GameIdFromVcd,
 } from "../services/game-id-resolver.service";
+import { registerLibraryRoot } from "../services/library-registry";
 
 export function registerLibraryIpc(): void {
   ipcMain.handle("get-games-files", async (_event, dirPath: string) => {
+    registerLibraryRoot(dirPath);
     return getGamesFiles(dirPath);
   });
 
@@ -29,6 +30,7 @@ export function registerLibraryIpc(): void {
   });
 
   ipcMain.handle("check-opl-structure", async (_event, dirPath: string) => {
+    registerLibraryRoot(dirPath);
     return checkOplStructure(dirPath);
   });
 
@@ -74,12 +76,4 @@ export function registerLibraryIpc(): void {
     return tryDeterminePs1GameIdFromVcd(filepath);
   });
 
-  ipcMain.handle(
-    "move-file",
-    async (event, sourcePath: string, destPath: string) => {
-      return moveFile(sourcePath, destPath, (progress) => {
-        event.sender.send("move-file-progress", progress);
-      });
-    }
-  );
 }

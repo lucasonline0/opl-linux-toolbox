@@ -22,7 +22,7 @@ export function registerDialogIpc(): void {
   });
 
   ipcMain.handle("open-external", async (_event, url: string) => {
-    if (/^https?:\/\//i.test(url)) {
+    if (/^https:\/\//i.test(url)) {
       await shell.openExternal(url);
       return true;
     }

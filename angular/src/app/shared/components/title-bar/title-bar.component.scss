@@ -4,8 +4,11 @@
 }
 
 .title-bar {
-  border-bottom: 1px solid oklch(60% 0.08 250 / 0.16);
+  background: transparent;
 }
+
+.window-dot { width:5px;height:5px;border-radius:50%;background:rgba(255,116,82,.72);box-shadow:0 0 9px rgba(255,116,82,.35); }
+.title-copy { color:rgba(216,219,227,.28);font-size:.58rem;letter-spacing:.04em; }
 
 .drag-region {
   -webkit-app-region: drag;
@@ -21,24 +24,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  color: oklch(80% 0.03 250 / 0.65);
+  width: 2.5rem;
+  margin: 4px 2px;
+  border-radius: 9px;
+  color: rgba(214, 218, 228, .38);
   background: transparent;
   border: none;
   transition: background 0.15s ease, color 0.15s ease;
   cursor: pointer;
 
   &:hover {
-    background: oklch(60% 0.1 250 / 0.15);
-    color: oklch(95% 0.02 250);
+    background: rgba(255,255,255,.055);
+    color: rgba(255,255,255,.88);
   }
 
   &:active {
-    background: oklch(60% 0.1 250 / 0.25);
+    background: rgba(255,255,255,.09);
   }
 }
 
 .win-btn-close:hover {
-  background: oklch(58% 0.21 25);
-  color: oklch(98% 0.01 250);
+  background: rgba(255,92,73,.75);
+  color: white;
 }

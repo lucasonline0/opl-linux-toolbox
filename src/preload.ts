@@ -49,6 +49,27 @@ function buildLibraryAPI() {
       ipcRenderer.invoke("check-art-files-exist", artDir, filenames),
     listAvailableArt: (gameId: string, system?: "PS1" | "PS2") =>
       ipcRenderer.invoke("list-available-art", gameId, system),
+    clearArtworkCache: () => ipcRenderer.invoke("clear-artwork-cache"),
+    openArtFolder: (root: string) => ipcRenderer.invoke("open-art-folder", root),
+    importArtworkManual: (root: string, gameId: string) => ipcRenderer.invoke("import-artwork-manual", root, gameId),
+
+    // ── Linux storage ─────────────────────────────
+    discoverStorage: () => ipcRenderer.invoke("storage-discover"),
+    inspectStorage: (root: string) => ipcRenderer.invoke("storage-inspect", root),
+    unmountStorage: (root: string) => ipcRenderer.invoke("storage-unmount", root),
+
+    // ── Safe PS2 import ───────────────────────────
+    preflightSafeImport: (request: unknown) => ipcRenderer.invoke("preflight-safe-import", request),
+    runSafeImport: (jobId: string, request: unknown) => ipcRenderer.invoke("run-safe-import", jobId, request),
+    cancelSafeImport: (jobId: string) => ipcRenderer.invoke("cancel-safe-import", jobId),
+    onSafeImportProgress: (callback: (progress: any) => void) => {
+      ipcRenderer.on("safe-import-progress", (_event, progress) => callback(progress));
+    },
+    removeAllSafeImportProgressListeners: () => ipcRenderer.removeAllListeners("safe-import-progress"),
+
+    // ── Maintenance ───────────────────────────────
+    scanMaintenance: (root: string) => ipcRenderer.invoke("maintenance-scan", root),
+    repairMaintenanceIssue: (root: string, issueId: string) => ipcRenderer.invoke("maintenance-repair", root, issueId),
 
     // ── Rename ─────────────────────────────────────
     renameGamefile: (
@@ -132,6 +153,8 @@ function buildLibraryAPI() {
         launcherFolder,
         bootName
       ),
+    deleteUlGame: (root: string, gameId: string, removeArtwork: boolean) =>
+      ipcRenderer.invoke("delete-ul-game", root, gameId, removeArtwork),
     onDeletePs1Progress: (
       callback: (entry: {
         label: string;
@@ -261,17 +284,6 @@ function buildLibraryAPI() {
     removeAllZsoCompressProgressListeners: () => {
       ipcRenderer.removeAllListeners("zso-compress-progress");
     },
-    moveFile: (sourcePath: string, destPath: string) =>
-      ipcRenderer.invoke("move-file", sourcePath, destPath),
-    onMoveFileProgress: (callback: (progress: any) => void) => {
-      ipcRenderer.on("move-file-progress", (event, progress) =>
-        callback(progress)
-      );
-    },
-    removeAllMoveFileProgressListeners: () => {
-      ipcRenderer.removeAllListeners("move-file-progress");
-    },
-
     // ── Settings & updates ─────────────────────────
     getSettings: () => ipcRenderer.invoke("get-settings"),
     setSetting: (key: string, value: unknown) =>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   GamecardComponent,
@@ -14,7 +14,7 @@ import { JobsService } from '../../shared/services/jobs.service';
 import { AsyncPipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Game } from '../../shared/types/game.type';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, shareReplay } from 'rxjs';
 
 type SystemTab = 'PS2' | 'PS1' | 'APPS';
 type SortMode = 'title-asc' | 'title-desc' | 'gameId-asc' | 'gameId-desc';
@@ -30,6 +30,7 @@ type SortMode = 'title-asc' | 'title-desc' | 'gameId-asc' | 'gameId-desc';
   ],
   templateUrl: './library.component.html',
   styleUrl: './library.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LibraryComponent {
   public showRenameDialog = false;
@@ -51,6 +52,8 @@ export class LibraryComponent {
     this._libraryService.returnTab = this.gameSystemToTab(game.system);
     this._router.navigate(['/library/details']);
   }
+
+  goImport() { void this._router.navigate(['/import']); }
 
   openRenameDialog() {
     this.showRenameDialog = true;
@@ -136,6 +139,7 @@ export class LibraryComponent {
 
   ngOnInit() {
     const library$ = this._libraryService.library$;
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
     this.activeTabSubject.next(this._libraryService.returnTab);
     this._libraryService.returnTab = 'PS2';
@@ -187,19 +191,15 @@ export class LibraryComponent {
         return filteredGames.sort((a, b) => {
           const getSortableValue = (game: Game) => {
             if (field === 'title') {
-              return (game.title || game.gameId || '').toLocaleLowerCase();
+              return (game.title || game.gameId || '').toLowerCase();
             }
-            return (game.gameId || '').toLocaleLowerCase();
+            return (game.gameId || '').toLowerCase();
           };
 
-          return (
-            getSortableValue(a).localeCompare(getSortableValue(b), undefined, {
-              numeric: true,
-              sensitivity: 'base',
-            }) * multiplier
-          );
+          return collator.compare(getSortableValue(a), getSortableValue(b)) * multiplier;
         });
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
   }
 

@@ -240,30 +240,18 @@
           }
 
           <div class="details-section">
-            <h3 class="details-section-title">Screenshots</h3>
+            <h3 class="details-section-title">Artwork assets ({{ assetGallery.length }})</h3>
             <div class="screenshots-grid">
-              @if (screenshots[0]; as scr) {
+              @for (scr of assetGallery; track scr.path) {
                 <div class="screenshot-item">
+                  <span class="asset-label">{{ scr.type }}</span>
                   <img
-                    [src]="'data:image/png;base64,' + scr.base64"
-                    alt="Screenshot"
+                    [src]="artDataUrl(scr)"
+                    [alt]="scr.type"
                     loading="lazy"
                   />
                 </div>
-              } @else {
-                <div class="screenshot-item screenshot-placeholder">
-                  <i-lucide name="image-off" size="28"></i-lucide>
-                </div>
-              }
-              @if (screenshots[1]; as scr) {
-                <div class="screenshot-item">
-                  <img
-                    [src]="'data:image/png;base64,' + scr.base64"
-                    alt="Screenshot"
-                    loading="lazy"
-                  />
-                </div>
-              } @else {
+              } @empty {
                 <div class="screenshot-item screenshot-placeholder">
                   <i-lucide name="image-off" size="28"></i-lucide>
                 </div>

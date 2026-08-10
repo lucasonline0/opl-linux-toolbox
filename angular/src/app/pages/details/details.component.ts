@@ -50,6 +50,8 @@ export class DetailsComponent {
   covArt: string | null = null;
   /** Ordered screenshots (SCR first, SCR2 second). */
   screenshots: gameArt[] = [];
+  /** Every additional remote asset, including numbered and unknown types. */
+  assetGallery: gameArt[] = [];
   /** Whether metadata is still being loaded. */
   loading = true;
 
@@ -87,16 +89,11 @@ export class DetailsComponent {
 
     // ── Artwork — sync, safe outside zone ─────────────────────────
     if (Array.isArray(this.game.art)) {
-      this.bgArt = this.findBase64Art(this.game.art, 'BG');
+      const background = this.game.art.find((a) => /^BG(?:_|$)/i.test(a.type || ''));
+      this.bgArt = background ? this.artDataUrl(background) : null;
       this.covArt = this.findBase64Art(this.game.art, 'COV');
-      this.screenshots = this.game.art
-        .filter(
-          (a) => a.type?.toUpperCase() === 'SCR' || a.type?.toUpperCase() === 'SCR2'
-        )
-        .sort((a, b) => {
-          const order: Record<string, number> = { SCR: 0, SCR2: 1 };
-          return (order[a.type?.toUpperCase() ?? ''] ?? 99) - (order[b.type?.toUpperCase() ?? ''] ?? 99);
-        });
+      this.screenshots = this.game.art.filter((a) => /^SCR(?:\d|_|$)/i.test(a.type || '')).sort((a,b)=>a.type.localeCompare(b.type));
+      this.assetGallery = this.game.art.filter((a) => a.type?.toUpperCase() !== 'COV').sort((a,b)=>a.type.localeCompare(b.type));
     }
 
     // ── Async metadata — fire-and-forget via .then() + detectChanges() ──
@@ -293,7 +290,13 @@ export class DetailsComponent {
    */
   private findBase64Art(art: gameArt[], type: string): string | null {
     const found = art.find((a) => a.type?.toUpperCase() === type.toUpperCase());
-    return found ? `data:image/png;base64,${found.base64}` : null;
+    return found ? this.artDataUrl(found) : null;
+  }
+
+  artDataUrl(art: gameArt): string {
+    if (art.url) return art.url;
+    const mime = /jpe?g/i.test(art.extension) ? 'image/jpeg' : 'image/png';
+    return `data:${mime};base64,${art.base64}`;
   }
 
   /**

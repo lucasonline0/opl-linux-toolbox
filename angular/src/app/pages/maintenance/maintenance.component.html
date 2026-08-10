@@ -1,0 +1,11 @@
+<div class="maintenance-page page fade-in">
+  <header class="maintenance-header"><div><span class="page-kicker">Library care</span><h1 class="section-title">Maintenance</h1><p class="page-subtitle">Read-only diagnosis first. Every repair stays targeted and reviewable.</p></div><button class="btn btn-ghost btn-sm" (click)="scan()"><i-lucide name="refresh-cw" size="15"></i-lucide> Rescan</button></header>
+  <div class="maintenance-scroll">
+    @if(loading){<div class="maintenance-loading"><span class="loading loading-spinner"></span><p>Inspecting your OPL library…</p></div>}
+    @else if(!issues.length){<section class="healthy-card glass-medium"><span><i-lucide name="shield-check" size="35"></i-lucide></span><div><small>Library health</small><h2>Everything looks good</h2><p>No incomplete UL installs or abandoned temporary files were found.</p></div></section>}
+    @else{
+      <div class="issue-summary"><div><span class="page-kicker">Attention recommended</span><h2>{{issues.length}} {{issues.length===1?'issue needs':'issues need'}} review</h2></div><button class="btn btn-primary btn-sm" [disabled]="!selected.size" (click)="repairSelected()"><i-lucide name="wrench" size="15"></i-lucide> Repair selected ({{selected.size}})</button></div>
+      <div class="issue-grid">@for(issue of issues;track issue.id){<article class="issue-card glass-medium"><div class="issue-top"><span class="issue-icon"><i-lucide [name]="issue.category==='abandoned-part'?'file-warning':'hard-drive-download'" size="19"></i-lucide></span><span class="issue-category">{{issue.category}}</span><input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [disabled]="!issue.repairable" (change)="toggle(issue.id,$any($event.target).checked)"/></div><h3>{{issue.title}}</h3>@if(issue.gameId){<p class="game-id">{{issue.gameId}}</p>}<p class="issue-detail">{{issue.detail}}</p><div class="issue-files">@for(file of issue.files.slice(0,3);track file){<code>{{file}}</code>}@if(issue.files.length>3){<span>+{{issue.files.length-3}} more files</span>}</div></article>}</div>
+    }
+  </div>
+</div>

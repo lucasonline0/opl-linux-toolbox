@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, map } from 'rxjs';
 import { LogsService } from './logs.service';
 import { LibraryService } from './library.service';
 import { ConfirmDialogService } from './confirm-dialog.service';
+import { SettingsService } from './settings.service';
 
 export type ImportJobType =
   | 'ps2-dvd'
@@ -111,6 +112,7 @@ export class JobsService {
     private readonly _logger: LogsService,
     private readonly _library: LibraryService,
     private readonly _confirm: ConfirmDialogService,
+    private readonly _settings: SettingsService,
   ) {}
 
   /** Queue one or more imports (as a single batch) and kick the worker if idle. */
@@ -146,6 +148,17 @@ export class JobsService {
         (j) => j.id !== id || j.status === 'running',
       ),
     );
+  }
+
+  public async cancelJob(id: string): Promise<void> {
+    const job = this.jobsSubject.value.find((item) => item.id === id);
+    if (!job) return;
+    if (job.status === 'queued') {
+      this.patchJob(id, { status: 'cancelled', stage: 'Cancelled', finishedAt: Date.now(), message: 'Cancelled before starting.' });
+    } else if (job.status === 'running' && job.type === 'ps2-dvd') {
+      await window.libraryAPI.cancelSafeImport(id);
+      this.patchJob(id, { stage: 'Cancelling safely…' });
+    }
   }
 
   private patchJob(id: string, patch: Partial<ImportJob>): void {
@@ -278,13 +291,18 @@ export class JobsService {
 
     const artDir = `${dirPath}/ART`;
     const saveAsName = job.saveAsName;
-    const localName = saveAsName || job.gameId;
-    const types = job.artTypes?.length ? job.artTypes : ['COV', 'ICO', 'SCR'];
-    const expectedFiles = types.map((t) => `${localName}_${t}.png`);
+    const available = await window.libraryAPI.listAvailableArt(job.gameId, job.system ?? 'PS2');
+    const types: string[] | undefined = job.artTypes?.length
+      ? job.artTypes
+      : available.success ? available.data.map((entry) => entry.type) : undefined;
+    const typeSet = types ? new Set(types.map((type) => type.toUpperCase())) : null;
+    const expectedFiles = available.success
+      ? available.data.filter((entry) => !typeSet || typeSet.has(entry.type.toUpperCase())).map((entry) => entry.fileName)
+      : [];
 
     this._logger.log(
       'jobsService',
-      `FetchArtwork for "${job.label}": gameId=${job.gameId}, saveAsName=${saveAsName ?? '(none)'}, localName=${localName}, expectedFiles=[${expectedFiles.join(', ')}]`,
+      `FetchArtwork for "${job.label}": gameId=${job.gameId}, remoteAssets=${available.data?.length || 0}, expectedFiles=[${expectedFiles.join(', ')}]`,
     );
 
     const existing = await window.libraryAPI.checkArtFilesExist(
@@ -303,10 +321,10 @@ export class JobsService {
 
     if (existing.length > 0) {
       if (job.skipExisting) {
-        const alreadySaved = types.filter((t) =>
-          existing.includes(`${localName}_${t}.png`),
+        const alreadySaved = (types || []).filter((type) =>
+          available.data.some((entry) => entry.type === type && existing.includes(entry.fileName)),
         );
-        downloadTypes = types.filter((t) => !alreadySaved.includes(t));
+        downloadTypes = (types || []).filter((t) => !alreadySaved.includes(t));
         this._logger.log(
           'jobsService',
           `Skipping ${alreadySaved.length} already-saved type(s) for "${job.label}": [${alreadySaved.join(', ')}]`,
@@ -481,61 +499,48 @@ export class JobsService {
   }
 
   private async runPs2DvdJob(job: ImportJob, dirPath: string) {
-    const sep = dirPath.includes('\\') ? '\\' : '/';
-    const destinationDir = `${dirPath.replace(/[\\/]$/, '')}${sep}DVD`;
-
-    window.libraryAPI.onMoveFileProgress((progress) =>
+    window.libraryAPI.onSafeImportProgress((progress) => {
+      if (progress.jobId !== job.id) return;
       this.patchJob(job.id, {
-        percent: progress.percent,
-        stage: `Copying ${progress.copiedMB}/${progress.totalMB} MB`,
-      }),
-    );
+        percent: progress.percent ?? this.jobsSubject.value.find((item) => item.id === job.id)?.percent ?? 0,
+        stage: progress.stage === 'copying'
+          ? `Copying ${((progress.bytes || 0) / 1048576).toFixed(1)} / ${((progress.totalBytes || 0) / 1048576).toFixed(1)} MiB · ${((progress.bytesPerSecond || 0) / 1048576).toFixed(1)} MiB/s · ETA ${Math.ceil(progress.etaSeconds || 0)}s`
+          : progress.stage === 'verifying-source' || progress.stage === 'verifying-destination'
+            ? `Verifying integrity · ${Math.round(progress.percent || 0)}%`
+            : progress.stage,
+      });
+    });
 
     try {
-      this.patchJob(job.id, { stage: 'Copying file…' });
-      const moveResult: any = await window.libraryAPI.moveFile(
-        job.filePath,
-        destinationDir,
-      );
-      if (!moveResult?.success) {
-        return {
-          success: false,
-          message: moveResult?.message || 'Failed to move game file.',
-        };
-      }
-
-      const movedPath =
-        moveResult.newPath ||
-        `${destinationDir}${sep}${job.filePath.split(/[\\/]/).pop()}`;
-
-      this.patchJob(job.id, { stage: 'Renaming…' });
-      // In "new OPL convention" mode the rename drops the GAMEID. prefix so
-      // the file is just "<Title>.iso". OPL reads the ID from SYSTEM.CNF.
-      const renameResult: any = await window.libraryAPI.renameGamefile(
-        movedPath,
-        job.gameId,
-        job.gameName,
-        !!job.keepOriginalName,
-      );
-      if (!renameResult?.success) {
-        return {
-          success: false,
-          message: renameResult?.message || 'Failed to rename game file.',
-        };
+      const settings = await this._settings.load();
+      const result: any = await window.libraryAPI.runSafeImport(job.id, {
+        sourcePath: job.filePath,
+        oplRoot: dirPath,
+        gameId: job.gameId,
+        gameName: job.gameName,
+        media: 'DVD',
+        keepOriginalName: !!job.keepOriginalName,
+        verifySha256: settings.verifySha256,
+      });
+      if (!result?.success) {
+        return { success: false, cancelled: /cancel/i.test(result?.message || ''), message: result?.message || 'Safe import failed.' };
       }
 
       if (job.downloadArtwork) {
-        this.patchJob(job.id, { stage: 'Fetching artwork…', percent: 100 });
-        await window.libraryAPI.downloadArtByGameId(
+        this.patchJob(job.id, { stage: 'Discovering and downloading all artwork…', percent: 100 });
+        const artwork: any = await window.libraryAPI.downloadArtByGameId(
           `${dirPath}/ART`,
           job.gameId,
           'PS2',
         );
+        const saved = artwork?.data?.filter((entry: any) => entry.savedPath).length || 0;
+        const total = artwork?.data?.length || 0;
+        return { success: true, message: `Game installed successfully. Artwork: ${saved}/${total} downloaded${total - saved ? `; ${total - saved} failed — retry available.` : '.'}` };
       }
 
-      return { success: true };
+      return { success: true, message: result.message };
     } finally {
-      window.libraryAPI.removeAllMoveFileProgressListeners();
+      window.libraryAPI.removeAllSafeImportProgressListeners();
     }
   }
 }

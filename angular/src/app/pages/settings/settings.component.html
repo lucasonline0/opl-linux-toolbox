@@ -1,133 +1,335 @@
-<div class="page flex h-full flex-col fade-in">
-  <header class="page-header glass flex items-center gap-3 px-6">
-    <i-lucide name="settings" size="26" class="text-accent"></i-lucide>
-    <h1 class="section-title text-2xl">Settings</h1>
+<div class="settings-page page fade-in">
+  <header class="settings-heading">
+    <span class="page-kicker">Application preferences</span>
+    <h1 class="section-title">Settings</h1>
+    <p class="page-subtitle">
+      Configure your library, imports and safety.
+    </p>
   </header>
+  <div class="settings-wrap">
+    <div class="settings-shell">
+      <aside class="settings-nav">
+        <button
+          [class.active]="section === 'general'"
+          (click)="section = 'general'"
+        >
+          <i-lucide name="home" size="17"></i-lucide><span>General</span>
+        </button>
+        <button
+          [class.active]="section === 'import'"
+          (click)="section = 'import'"
+        >
+          <i-lucide name="circle-down" size="17"></i-lucide><span>Import</span>
+        </button>
+        <button
+          [class.active]="section === 'artwork'"
+          (click)="section = 'artwork'"
+        >
+          <i-lucide name="images" size="17"></i-lucide><span>Artwork</span>
+        </button>
+        <button
+          [class.active]="section === 'safety'"
+          (click)="section = 'safety'"
+        >
+          <i-lucide name="shield-check" size="17"></i-lucide><span>Safety</span>
+        </button>
+        <button
+          [class.active]="section === 'advanced'"
+          (click)="section = 'advanced'"
+        >
+          <i-lucide name="settings-2" size="17"></i-lucide><span>Advanced</span>
+        </button>
+      </aside>
 
-  <div class="flex-1 overflow-y-auto px-6 py-8">
-    <div class="flex flex-col gap-4 max-w-3xl mx-auto">
-      <!-- ── Library ─────────────────────────────────────────────── -->
-      <div class="glass rounded-box">
-        <div class="card-body">
-          <h2 class="card-title text-base">
-            <i-lucide name="library" size="20" class="text-accent"></i-lucide>
-            Library
-          </h2>
-
-          <div class="flex items-start justify-between gap-4 mt-1">
-            <div>
-              <p class="font-medium text-sm">Reconnect on launch</p>
-              <p class="text-sm text-base-content/60">
-                Automatically re-mount the last used directory when the app
-                starts, if it is still available.
+      <main class="settings-content">
+        @if (settings$ | async; as settings) {
+          @if (section === "general") {
+            <div class="settings-title">
+              <span class="setting-icon coral"
+                ><i-lucide name="home" size="20"></i-lucide
+              ></span>
+              <div>
+                <h2>General</h2>
+                <p>Choose how OPL Linux reconnects and stays up to date.</p>
+              </div>
+            </div>
+            <div class="setting-group">
+              <label class="setting-row"
+                ><span
+                  ><b>Reconnect on launch</b
+                  ><small
+                    >Open the last library automatically when it is still
+                    available.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="settings.autoReconnect"
+                  (change)="onAutoReconnectChange($any($event.target).checked)"
+              /></label>
+              <div class="setting-row static">
+                <span
+                  ><b>Last library</b
+                  ><small>{{
+                    settings.lastDirectory ||
+                      "No library has been connected yet."
+                  }}</small></span
+                ><span class="value-chip">{{
+                  settings.lastDirectory ? "Remembered" : "None"
+                }}</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <div class="setting-row">
+                <span
+                  ><b>Application updates</b
+                  ><small>
+                    @if (_update.result$ | async; as result) {
+                      @if (result.updateAvailable) {
+                        Version {{ result.latestVersion }} is available.
+                      } @else if (result.error) {
+                        Could not check right now.
+                      } @else {
+                        You are on version {{ result.currentVersion }}.
+                      }
+                    } @else {
+                      Check releases from the official GitHub repository.
+                    }
+                  </small></span
+                >
+                <div class="row-actions">
+                  @if ((_update.result$ | async)?.updateAvailable) {
+                    <button
+                      class="btn btn-primary btn-sm"
+                      (click)="openRelease()"
+                    >
+                      Download
+                    </button>
+                  }
+                  <button
+                    class="btn btn-ghost btn-sm"
+                    [disabled]="_update.checking$ | async"
+                    (click)="checkForUpdates()"
+                  >
+                    @if (_update.checking$ | async) {
+                      <span class="loading loading-spinner loading-xs"></span>
+                    } @else {
+                      <i-lucide name="refresh-cw" size="14"></i-lucide>
+                    }
+                    Check now
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          @if (section === "import") {
+            <div class="settings-title">
+              <span class="setting-icon blue"
+                ><i-lucide name="circle-down" size="20"></i-lucide
+              ></span>
+              <div>
+                <h2>Import</h2>
+                <p>How new games are prepared for your destination.</p>
+              </div>
+            </div>
+            <div class="strategy-panel">
+              <div class="strategy-visual">
+                <span>FAT32</span
+                ><i-lucide name="arrow-right" size="15"></i-lucide
+                ><strong>ISO or UL</strong>
+              </div>
+              <p>
+                The install method is chosen from the real destination
+                filesystem and file size during pre-flight.
               </p>
             </div>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              [checked]="(settings$ | async)?.autoReconnect"
-              (change)="onAutoReconnectChange($any($event.target).checked)"
-            />
-          </div>
-
-          <div class="accent-line my-2 h-px opacity-60"></div>
-
-          <div>
-            <p class="font-medium text-sm">Last directory</p>
-            @if((settings$ | async)?.lastDirectory; as dir) {
-            <p class="font-mono text-[0.72rem] text-base-content/55 break-all mt-1">
-              {{ dir }}
-            </p>
-            } @else {
-            <p class="text-sm text-base-content/40 italic mt-1">
-              No directory has been mounted yet.
-            </p>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Updates ─────────────────────────────────────────────── -->
-      <div class="glass rounded-box">
-        <div class="card-body">
-          <h2 class="card-title text-base">
-            <i-lucide name="refresh-cw" size="20" class="text-accent"></i-lucide>
-            Updates
-          </h2>
-
-          <div class="flex items-start justify-between gap-4 mt-1">
-            <div class="min-w-0">
-              <p class="font-medium text-sm">Check for updates</p>
-              @if ((_update.result$ | async); as result) {
-                @if (result.updateAvailable) {
-                <p class="text-sm text-primary mt-1">
-                  Version {{ result.latestVersion }} is available
-                  (you have {{ result.currentVersion }}).
-                </p>
-                } @else if (result.error) {
-                <p class="text-sm text-warning mt-1">
-                  Couldn't check right now: {{ result.error }}
-                </p>
-                } @else {
-                <p class="text-sm text-base-content/60 mt-1">
-                  You're on the latest version ({{ result.currentVersion }}).
-                </p>
-                }
-              } @else {
-              <p class="text-sm text-base-content/60 mt-1">
-                Releases are checked against GitHub.
-              </p>
+            <div class="info-grid">
+              <article>
+                <i-lucide name="scan-search" size="18"></i-lucide
+                ><b>Pre-flight first</b
+                ><small
+                  >Title, ID, format, destination and warnings appear before
+                  writing.</small
+                >
+              </article>
+              <article>
+                <i-lucide name="list-ordered" size="18"></i-lucide
+                ><b>One write at a time</b
+                ><small
+                  >Heavy jobs are serialized per destination to protect
+                  removable media.</small
+                >
+              </article>
+            </div>
+          }
+          @if (section === "artwork") {
+            <div class="settings-title">
+              <span class="setting-icon coral"
+                ><i-lucide name="images" size="20"></i-lucide
+              ></span>
+              <div>
+                <h2>Artwork</h2>
+                <p>Control automatic discovery and local artwork cache.</p>
+              </div>
+            </div>
+            <div class="setting-group">
+              <label class="setting-row"
+                ><span
+                  ><b>Artwork after import</b
+                  ><small
+                    >Fetch artwork after the game itself has been
+                    validated.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="settings.autoArtwork"
+                  (change)="
+                    set('autoArtwork', $any($event.target).checked)
+                  " /></label
+              ><label class="setting-row"
+                ><span
+                  ><b>Download every available asset</b
+                  ><small
+                    >Use the remote game folder as source of truth, including
+                    numbered and additional art.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="settings.downloadAllArtwork"
+                  (change)="
+                    set('downloadAllArtwork', $any($event.target).checked)
+                  "
+              /></label>
+            </div>
+            <div class="setting-group">
+              <div class="setting-row">
+                <span
+                  ><b>Artwork index cache</b
+                  ><small
+                    >Clearing it forces fresh remote discovery on the next
+                    check.</small
+                  ></span
+                ><button
+                  class="btn btn-ghost btn-sm"
+                  (click)="clearArtworkCache()"
+                >
+                  <i-lucide name="trash-2" size="14"></i-lucide> Clear cache
+                </button>
+              </div>
+              @if (cacheMessage) {
+                <div class="success-note">
+                  <i-lucide name="check" size="14"></i-lucide>{{ cacheMessage }}
+                </div>
               }
             </div>
-
-            <div class="flex shrink-0 gap-2">
-              @if ((_update.result$ | async)?.updateAvailable) {
-              <button class="btn btn-primary btn-sm" (click)="openRelease()">
-                <i-lucide name="download" size="15"></i-lucide> Download
-              </button>
-              }
-              <button
-                class="btn btn-outline btn-sm"
-                (click)="checkForUpdates()"
-                [disabled]="_update.checking$ | async"
-              >
-                @if (_update.checking$ | async) {
-                <span class="loading loading-spinner loading-xs"></span>
-                } @else {
-                <i-lucide name="refresh-cw" size="15"></i-lucide>
-                }
-                Check now
-              </button>
+          }
+          @if (section === "safety") {
+            <div class="settings-title">
+              <span class="setting-icon green"
+                ><i-lucide name="shield-check" size="20"></i-lucide
+              ></span>
+              <div>
+                <h2>Safety</h2>
+                <p>Keep every write deliberate and recoverable.</p>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Logging ─────────────────────────────────────────────── -->
-      <div class="glass rounded-box">
-        <div class="card-body">
-          <h2 class="card-title text-base">
-            <i-lucide name="terminal" size="20" class="text-accent"></i-lucide>
-            Logging
-          </h2>
-
-          <div class="flex items-start justify-between gap-4 mt-1">
-            <div>
-              <p class="font-medium text-sm">Verbose logging</p>
-              <p class="text-sm text-base-content/60">
-                Include detailed diagnostic entries in the in-app log viewer.
-                Useful when reporting issues.
-              </p>
+            <div class="safety-score">
+              <div class="safety-ring">
+                <i-lucide name="shield-check" size="30"></i-lucide>
+              </div>
+              <div>
+                <span>Recommended protection</span
+                ><strong>{{
+                  settings.verifySha256 && settings.confirmDestructiveActions
+                    ? "Fully enabled"
+                    : "Review your settings"
+                }}</strong
+                ><small
+                  >Temporary files, atomic rename and targeted rollback are
+                  always active.</small
+                >
+              </div>
             </div>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              [checked]="verboseMode"
-              (change)="onVerboseChange()"
-            />
-          </div>
-        </div>
-      </div>
+            <div class="setting-group">
+              <label class="setting-row"
+                ><span
+                  ><b>Verify SHA-256</b
+                  ><small
+                    >Compare source and temporary destination before the atomic
+                    rename.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="settings.verifySha256"
+                  (change)="
+                    set('verifySha256', $any($event.target).checked)
+                  " /></label
+              ><label class="setting-row"
+                ><span
+                  ><b>Confirm destructive actions</b
+                  ><small
+                    >Show exact targets before game removal or maintenance
+                    repair.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="settings.confirmDestructiveActions"
+                  (change)="
+                    set(
+                      'confirmDestructiveActions',
+                      $any($event.target).checked
+                    )
+                  "
+              /></label>
+            </div>
+          }
+          @if (section === "advanced") {
+            <div class="settings-title">
+              <span class="setting-icon blue"
+                ><i-lucide name="settings-2" size="20"></i-lucide
+              ></span>
+              <div>
+                <h2>Advanced</h2>
+                <p>Diagnostics and environment integration.</p>
+              </div>
+            </div>
+            <div class="setting-group">
+              <label class="setting-row"
+                ><span
+                  ><b>Verbose logging</b
+                  ><small
+                    >Include detailed diagnostic entries in the log
+                    viewer.</small
+                  ></span
+                ><input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  [checked]="verboseMode"
+                  (change)="onVerboseChange()"
+              /></label>
+              <div class="setting-row static">
+                <span
+                  ><b>GitHub API token</b
+                  ><small
+                    >The token is read only from your environment and never
+                    displayed or stored.</small
+                  ></span
+                ><span
+                  class="value-chip"
+                  [class.available]="settings.githubTokenAvailable"
+                  >{{
+                    settings.githubTokenAvailable ? "Available" : "Not detected"
+                  }}</span
+                >
+              </div>
+            </div>
+          }
+        }
+      </main>
     </div>
   </div>
 </div>

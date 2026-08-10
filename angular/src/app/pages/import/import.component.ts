@@ -12,6 +12,7 @@ interface StagedFile {
   detected: boolean;
   invalid: boolean;
   message?: string;
+  preflight?: ImportPreflight;
 }
 
 @Component({
@@ -54,7 +55,7 @@ export class ImportComponent {
    */
   get readyCount(): number {
     return this.staged.filter(
-      (f) => f.gameName && (this.isApp || f.gameId)
+      (f) => f.gameName && (this.isApp || f.gameId) && (!this.isGameDvd || !!f.preflight)
     ).length;
   }
 
@@ -84,9 +85,31 @@ export class ImportComponent {
           ? this.stageApp(path)
           : await this.detectFile(path);
         this.staged = [...this.staged, staged];
+        if (this.isGameDvd && staged.gameId && staged.gameName) {
+          await this.refreshPreflight(staged);
+        }
       }
     } finally {
       this.scanning = false;
+    }
+  }
+
+  async refreshPreflight(file: StagedFile) {
+    const root = this._libraryService.currentDirectoryValue;
+    if (!root || !file.gameId || !file.gameName || !this.isGameDvd) return;
+    file.message = undefined;
+    try {
+      file.preflight = await window.libraryAPI.preflightSafeImport({
+        sourcePath: file.path,
+        oplRoot: root,
+        gameId: file.gameId,
+        gameName: file.gameName,
+        media: 'DVD',
+        keepOriginalName: this.keepOriginalName,
+      });
+    } catch (error: any) {
+      file.preflight = undefined;
+      file.message = error?.message || String(error);
     }
   }
 
@@ -140,7 +163,7 @@ export class ImportComponent {
 
   importAll() {
     const ready = this.staged.filter(
-      (f) => f.gameName && (this.isApp || f.gameId)
+      (f) => f.gameName && (this.isApp || f.gameId) && (!this.isGameDvd || !!f.preflight)
     );
     if (!ready.length) {
       return;

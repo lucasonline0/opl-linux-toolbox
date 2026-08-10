@@ -28,10 +28,10 @@ describe('AppComponent', () => {
     expect(compiled.textContent).toContain('Library');
   });
 
-  it('should show mount directory action by default', () => {
+  it('should show folder selection action by default', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Mount Directory');
+    expect(compiled.textContent).toContain('Select folder');
   });
 });

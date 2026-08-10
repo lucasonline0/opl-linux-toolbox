@@ -1,5 +1,6 @@
 @if (collapsed) {
 <!-- Collapsed rail -->
+@if ((_jobs.jobs$ | async)?.length) {
 <button
   class="jobs-rail glass-strong"
   (click)="toggle()"
@@ -12,6 +13,7 @@
   }
   }
 </button>
+}
 } @else {
 <!-- Expanded panel -->
 <aside class="jobs-panel glass-strong flex w-72 flex-col">
@@ -56,7 +58,11 @@
           ></i-lucide>
           <span class="truncate text-xs font-medium" [title]="job.label">{{ job.label }}</span>
           <span class="badge badge-ghost badge-xs ml-auto shrink-0">{{ typeLabel(job) }}</span>
-          @if (job.status === 'success' || job.status === 'error' || job.status === 'queued' || job.status === 'cancelled') {
+          @if (job.status === 'running' || job.status === 'queued') {
+          <button class="btn btn-ghost btn-xs btn-square shrink-0 text-warning" (click)="_jobs.cancelJob(job.id)" title="Cancel safely">
+            <i-lucide name="square" size="12"></i-lucide>
+          </button>
+          } @else {
           <button
             class="btn btn-ghost btn-xs btn-square shrink-0"
             (click)="_jobs.removeJob(job.id)"

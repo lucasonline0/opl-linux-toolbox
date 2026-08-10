@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { BuildInfo } from '../../build-info';
+import AppConfig from '../../../../../../app-config.json';
 
 @Component({
   selector: 'app-title-bar',
@@ -18,12 +19,14 @@ export class TitleBarComponent implements OnInit {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _cdr = inject(ChangeDetectorRef);
   public readonly version = BuildInfo.version;
+  public readonly appName = AppConfig.name;
   public visible = false;
   public maximized = false;
   public canMinimize = false;
   public canMaximize = false;
 
   ngOnInit() {
+    if (!window.windowAPI) return;
     void Promise.all([
       window.windowAPI.platform(),
       window.windowAPI.canWindowControls(),
@@ -44,7 +47,7 @@ export class TitleBarComponent implements OnInit {
     });
 
     this._destroyRef.onDestroy(() =>
-      window.windowAPI.removeAllMaximizedChangeListeners(),
+      window.windowAPI?.removeAllMaximizedChangeListeners?.(),
     );
   }
 

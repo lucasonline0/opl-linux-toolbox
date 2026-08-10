@@ -1,6 +1,7 @@
 import * as fs from "fs/promises";
 import path from "path";
 import { createLogger } from "../logger";
+import { assertPathContained } from "../utils/path-safety";
 
 const log = createLogger("delete");
 
@@ -35,6 +36,8 @@ export async function deleteGameAndRelatedFiles(
   };
 
   const oplRoot = path.dirname(artDir);
+  gamePath = assertPathContained(oplRoot, gamePath);
+  artDir = assertPathContained(oplRoot, artDir);
 
   const rel = (p: string) => path.relative(oplRoot, p);
 

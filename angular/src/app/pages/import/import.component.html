@@ -221,6 +221,7 @@
                 placeholder="Game ID (SLUS_123.45)"
                 [value]="file.gameId"
                 (input)="file.gameId = $any($event.target).value"
+                (blur)="refreshPreflight(file)"
               />
               <input
                 type="text"
@@ -228,10 +229,23 @@
                 placeholder="Game name"
                 [value]="file.gameName"
                 (input)="file.gameName = $any($event.target).value"
+                (blur)="refreshPreflight(file)"
               />
             </div>
             @if (file.detected) {
             <span class="label mt-1 text-success text-xs">Auto-detected</span>
+            }
+            @if (file.preflight; as plan) {
+            <div class="preflight-grid mt-3">
+              <div><span>Game ID</span><strong>{{ plan.gameId }}</strong></div>
+              <div><span>Size</span><strong>{{ (plan.sizeBytes / 1073741824).toFixed(2) }} GB</strong></div>
+              <div><span>Filesystem</span><strong>{{ plan.filesystem }}</strong></div>
+              <div><span>Destination</span><strong>{{ plan.destinationFormat }}</strong></div>
+              <div class="sm:col-span-2"><span>Method</span><strong>{{ plan.methodLabel }}</strong></div>
+            </div>
+            @if (plan.warning) { <p class="mt-2 text-xs text-warning">{{ plan.warning }}</p> }
+            } @else if (isGameDvd && file.message) {
+            <p class="mt-2 text-xs text-error">Pre-flight: {{ file.message }}</p>
             }
             }
           </div>

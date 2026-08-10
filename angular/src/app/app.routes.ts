@@ -8,13 +8,19 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { VmcComponent } from './pages/vmc/vmc.component';
 import { DetailsComponent } from './pages/details/details.component';
 import { loadingGuard } from './shared/guards/loading.guard';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { ArtworkComponent } from './pages/artwork/artwork.component';
+import { MaintenanceComponent } from './pages/maintenance/maintenance.component';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'library',
+    redirectTo: 'dashboard',
     pathMatch: 'full',
   },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [loadingGuard] },
+  { path: 'artwork', component: ArtworkComponent, canActivate: [loadingGuard] },
+  { path: 'maintenance', component: MaintenanceComponent, canActivate: [loadingGuard] },
   {
     path: 'library',
     component: LibraryComponent,

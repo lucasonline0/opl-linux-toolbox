@@ -7,6 +7,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const pkg = require('../package.json');
+const appConfig = require('../app-config.json');
 
 let buildNumber = 'dev';
 try {
@@ -30,4 +31,10 @@ export const BuildInfo = {
 
 const target = path.join(__dirname, '..', 'angular', 'src', 'app', 'shared', 'build-info.ts');
 fs.writeFileSync(target, out);
+const indexPath = path.join(__dirname, '..', 'angular', 'src', 'index.html');
+const index = fs.readFileSync(indexPath, 'utf8').replace(
+  /(<(?:title|div)[^>]*data-app-name[^>]*>)[^<]*(<\/[^>]+>)/g,
+  `$1${appConfig.name}$2`,
+);
+fs.writeFileSync(indexPath, index);
 console.log(`[build-info] ${pkg.version} · ${buildNumber} · ${buildDate}`);

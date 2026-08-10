@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 @plugin "daisyui" {
@@ -17,22 +16,22 @@
   color-scheme: dark;
 
   /* Surfaces: base-100 = darkest panel, lighter as it stacks up */
-  --color-base-100: oklch(22% 0.04 258);
-  --color-base-200: oklch(27% 0.045 258);
-  --color-base-300: oklch(34% 0.05 258);
+  --color-base-100: #171a22;
+  --color-base-200: #20232c;
+  --color-base-300: #2a2e38;
   --color-base-content: oklch(93% 0.025 250);
 
   /* Electric PlayStation blue */
-  --color-primary: oklch(64% 0.19 252);
-  --color-primary-content: oklch(98% 0.01 252);
+  --color-primary: #ff7048;
+  --color-primary-content: #fff8f5;
 
   /* Indigo / violet secondary */
-  --color-secondary: oklch(60% 0.17 287);
-  --color-secondary-content: oklch(98% 0.01 287);
+  --color-secondary: #75a7ff;
+  --color-secondary-content: #0d0f14;
 
   /* Cyan glow accent */
-  --color-accent: oklch(82% 0.13 212);
-  --color-accent-content: oklch(22% 0.05 240);
+  --color-accent: #ff8b6a;
+  --color-accent-content: #0d0f14;
 
   --color-neutral: oklch(30% 0.04 258);
   --color-neutral-content: oklch(92% 0.02 250);
@@ -46,9 +45,9 @@
   --color-error: oklch(64% 0.22 22);
   --color-error-content: oklch(98% 0.01 22);
 
-  --radius-selector: 1rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.85rem;
+  --radius-selector: 999px;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
 
   --size-selector: 0.25rem;
   --size-field: 0.25rem;

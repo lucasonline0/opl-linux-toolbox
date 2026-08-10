@@ -3,6 +3,7 @@ import * as fs from "fs/promises";
 import path from "path";
 import { createLogger, formatBytes } from "../logger";
 import { isDirectoryEntry } from "../utils/fs-entry";
+import { artworkUrl } from "./art-url.service";
 
 const log = createLogger("library");
 
@@ -212,10 +213,10 @@ export async function getULGames(dirPath: string) {
       const mediaType = mediaTypeRaw === 0x12 ? "CD" : "DVD";
 
       const hash = crc32(name).toString(16).padStart(8, "0").toUpperCase();
-      const prefixByCrc = `ul.${hash}`;
+      const prefixByCrc = `UL.${hash}`;
 
       const gameIdNoDot = gameId.replace(/\./g, "").toUpperCase();
-      const prefixById = `ul.${gameIdNoDot}`;
+      const prefixById = `UL.${gameIdNoDot}`;
 
       let totalSize = 0;
       for (const f of ulFiles) {
@@ -261,26 +262,20 @@ export async function getArtFolder(dirpath: string) {
           )
           .map(async (item) => {
             const filePath = path.join(artDir, item.name);
-            let fileBuffer;
-            try {
-              fileBuffer = await fs.readFile(filePath);
-            } catch (err) {
-              log.verbose(`Skipping unreadable artwork ${filePath}: ${(err as Error)?.message || err}`);
-              return null;
-            }
             const baseName = path.parse(item.name).name;
-            const lastUnderscoreIdx = baseName.lastIndexOf("_");
-            const type = lastUnderscoreIdx >= 0 ? baseName.slice(lastUnderscoreIdx + 1) : "";
-            const nameBeforeType = lastUnderscoreIdx >= 0 ? baseName.slice(0, lastUnderscoreIdx) : baseName;
-            const idMatch = nameBeforeType.match(/([A-Z]{4}_\d{3}\.\d{2})/i);
-            const gameId = idMatch ? idMatch[1] : nameBeforeType;
+            const idMatch = baseName.match(/^([A-Z0-9]{4}_\d{3}\.\d{2})_/i);
+            const gameId = idMatch ? idMatch[1].toUpperCase() : baseName;
+            // Preserve compound remote types (BG_00, SCR_01, etc.) instead of
+            // truncating them to the final numeric suffix.
+            const type = idMatch ? baseName.slice(idMatch[0].length) : "";
             return {
               name: baseName,
               extension: path.extname(item.name),
               path: filePath,
               gameId,
               type,
-              base64: fileBuffer.toString("base64"),
+              base64: "",
+              url: artworkUrl(filePath),
             };
           })
       )

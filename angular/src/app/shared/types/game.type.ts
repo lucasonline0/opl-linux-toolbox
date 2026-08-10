@@ -67,4 +67,5 @@ export type gameArt = {
   path: string;
   type: string;
   base64: string;
+  url?: string;
 };

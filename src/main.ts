@@ -5,33 +5,42 @@ import {
   globalShortcut,
   ipcMain,
   Menu,
+  net,
+  protocol,
 } from "electron";
 import path from "path";
+import { pathToFileURL } from "url";
 import electronReloader from "electron-reloader";
 import PackageInfo from "../package.json";
 import { createLogger, setLogWindow } from "./logger";
 import { registerAllIpc } from "./ipc";
+import { APP_CONFIG } from "./app-config";
+import { artworkPath } from "./services/art-url.service";
+
+protocol.registerSchemesAsPrivileged([{ scheme: "opl-art", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
 
 const log = createLogger("main");
 
-const size = { minWidth: 800, minHeight: 600 };
+const size = { width: 1200, height: 760, minWidth: 1000, minHeight: 680 };
 
 // Tracks whether the renderer has a long-running action in progress.
 // Updated via the "set-loading-state" IPC channel from LibraryService.
 let rendererIsLoading = false;
 let forceCloseRequested = false;
+let gpuStatusLogged = false;
 
 function createWindow() {
   const isMac = process.platform === "darwin";
 
   const win = new BrowserWindow({
-    width: size.minWidth,
-    height: size.minHeight,
+    width: size.width,
+    height: size.height,
     minWidth: size.minWidth,
     minHeight: size.minHeight,
-    title: `OrbitOPL Toolbox (${PackageInfo.version})`,
+    title: `${APP_CONFIG.name} (${PackageInfo.version})`,
     icon: path.join(__dirname, "assets", "applogo", "icon_512x512.png"),
     frame: isMac,
+    backgroundColor: "#090b11",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -71,7 +80,7 @@ function createWindow() {
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
         {
-          label: "OrbitOPL Toolbox",
+          label: APP_CONFIG.name,
           submenu: [
             {
               label: "Quit",
@@ -128,7 +137,7 @@ function createWindow() {
   };
 
   log.info(
-    `Launching OrbitOPL Toolbox v${PackageInfo.version} (${
+    `Launching ${APP_CONFIG.name} v${PackageInfo.version} (${
       serve ? "dev/serve" : "packaged"
     } mode) on ${process.platform}`
   );
@@ -142,6 +151,9 @@ function createWindow() {
       path.join(__dirname, "..", "angular", "browser", "index.html")
     );
   }
+  win.webContents.once("did-finish-load", () => {
+    if (!gpuStatusLogged) { gpuStatusLogged = true; log.info(`GPU features: ${JSON.stringify(app.getGPUFeatureStatus())}`); }
+  });
 }
 
 // Register all IPC handlers (pure side-effect, no window needed)
@@ -153,7 +165,14 @@ ipcMain.on("set-loading-state", (_event, isLoading: boolean) => {
   log.verbose(`Renderer loading state -> ${rendererIsLoading ? "busy" : "idle"}`);
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  protocol.handle("opl-art", (request) => {
+    const url = new URL(request.url);
+    const filePath = url.hostname === "asset" ? artworkPath(url.pathname.slice(1)) : undefined;
+    return filePath ? net.fetch(pathToFileURL(filePath).toString()) : new Response("Not found", { status: 404 });
+  });
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

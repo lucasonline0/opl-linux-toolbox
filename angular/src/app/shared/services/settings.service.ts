@@ -13,6 +13,17 @@ import { LogsService } from './logs.service';
 export class SettingsService {
   private settingsSubject = new BehaviorSubject<AppSettings>({
     autoReconnect: true,
+    autoArtwork: true,
+    downloadAllArtwork: true,
+    verifySha256: true,
+    confirmDestructiveActions: true,
+    theme: 'auto',
+    animations: true,
+    density: 'comfortable',
+    accent: 'blue',
+    glassIntensity: 'medium',
+    cornerRadius: 'default',
+    githubTokenAvailable: false,
   });
   public get settings$(): Observable<AppSettings> {
     return this.settingsSubject.asObservable();
@@ -30,6 +41,7 @@ export class SettingsService {
     try {
       const settings = await window.libraryAPI.getSettings();
       this.settingsSubject.next(settings);
+      this.applyAppearance(settings);
       this.loaded = true;
       return settings;
     } catch (error) {
@@ -56,11 +68,22 @@ export class SettingsService {
     try {
       const updated = await window.libraryAPI.setSetting(key, value);
       this.settingsSubject.next(updated);
+      this.applyAppearance(updated);
     } catch (error) {
       this._logger.error(
         'settingsService',
         `Failed to persist setting "${String(key)}": ${error}`
       );
     }
+  }
+
+  private applyAppearance(_settings: AppSettings): void {
+    const root = document.documentElement;
+    root.dataset['themeMode'] = 'dark';
+    root.dataset['accent'] = 'blue';
+    root.dataset['density'] = 'comfortable';
+    root.dataset['motion'] = 'on';
+    root.dataset['glass'] = 'medium';
+    root.dataset['radius'] = 'default';
   }
 }

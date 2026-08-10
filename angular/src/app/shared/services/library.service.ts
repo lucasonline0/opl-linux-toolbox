@@ -71,6 +71,9 @@ export class LibraryService {
   }
 
   private currentDirectory: string | undefined;
+  private storageSubject = new BehaviorSubject<StorageInfo | null>(null);
+  public get storage$(): Observable<StorageInfo | null> { return this.storageSubject.asObservable(); }
+  public get storageValue(): StorageInfo | null { return this.storageSubject.value; }
   private currentDirectorySubject = new BehaviorSubject<string | undefined>(
     undefined
   );
@@ -116,7 +119,19 @@ export class LibraryService {
   constructor(
     private readonly _logger: LogsService,
     private readonly _settings: SettingsService
-  ) { }
+  ) {
+    // Detect hot-unplug without blocking the UI. Heavy jobs independently
+    // fail/rollback when their write handle disappears.
+    setInterval(async () => {
+      if (!this.currentDirectory || this.loadingSubject.value || !window.libraryAPI) return;
+      const root = this.currentDirectory;
+      const exists = await window.libraryAPI.directoryExists(root).catch(() => false);
+      if (!exists && this.currentDirectory === root) {
+        this._logger.error('libraryService', `Storage removed: ${root}`);
+        this.disconnectCurrentDirectory();
+      }
+    }, 4000);
+  }
 
   /**
    * On launch, re-mount the last used directory if auto-reconnect is enabled
@@ -142,6 +157,7 @@ export class LibraryService {
       `Auto-reconnecting last directory: ${settings.lastDirectory}`
     );
     this.setCurrentDirectory(settings.lastDirectory);
+    await this.refreshStorageInfo(settings.lastDirectory);
     await this.getGamesFiles(settings.lastDirectory);
   }
 
@@ -155,6 +171,7 @@ export class LibraryService {
       'User disconnected OPL Library directory'
     );
     this.setCurrentDirectory(undefined);
+    this.storageSubject.next(null);
     this.librarySubject.next([]);
     this.invalidFilesSubject.next([]);
   }
@@ -188,6 +205,7 @@ export class LibraryService {
         }
 
         this.setCurrentDirectory(chosen);
+        await this.refreshStorageInfo(chosen);
         this._settings.set('lastDirectory', chosen);
         this.setLoading(false);
         this.setCurrentAction('');
@@ -201,6 +219,31 @@ export class LibraryService {
         this.setCurrentAction('');
       }
     });
+  }
+
+  public async refreshStorageInfo(root = this.currentDirectory): Promise<void> {
+    if (!root) return;
+    try {
+      this.storageSubject.next(await window.libraryAPI.inspectStorage(root));
+    } catch (error) {
+      this.storageSubject.next(null);
+      this._logger.error('libraryService', `Failed to inspect storage: ${error}`);
+    }
+  }
+
+  public async safeUnmount(): Promise<void> {
+    if (!this.currentDirectory) return;
+    const info = this.storageSubject.value;
+    if (!info?.source?.startsWith('/dev/')) {
+      this.disconnectCurrentDirectory();
+      return;
+    }
+    const result = await window.libraryAPI.unmountStorage(this.currentDirectory);
+    if (!result.success) {
+      window.alert(`Could not safely unmount: ${result.message}`);
+      return;
+    }
+    this.disconnectCurrentDirectory();
   }
 
   /**
@@ -587,7 +630,7 @@ export class LibraryService {
       if (game.isPs1Launcher && game.ps1LauncherBoot) {
         const bootName = game.ps1LauncherBoot;
         game.art = artFiles.filter(
-          (art: gameArt) => art.name === bootName + '_' + (art.type || ''),
+          (art: gameArt) => art.gameId === game.gameId || art.name === bootName + '_' + (art.type || ''),
         );
       } else if (game.system === 'APPS' && game.filename) {
         // Regular ELF apps: art files follow <boot>.ELF_<TYPE>.png convention
@@ -683,7 +726,7 @@ export class LibraryService {
           return {
             ...game,
             art: artFiles
-              .filter((art: gameArt) => (bootName + '_' + (art.type || '')) === art.name)
+              .filter((art: gameArt) => art.gameId === game.gameId || (bootName + '_' + (art.type || '')) === art.name)
               .map((art: gameArt) => art),
           };
         }
@@ -856,6 +899,11 @@ export class LibraryService {
 
     try {
       const currentDir = this.currentDirectory ?? '';
+      if (game.format === 'UL') {
+        const result = await window.libraryAPI.deleteUlGame(currentDir, game.gameId, true);
+        if (result.success && !skipRefresh) this.refreshGamesFiles();
+        return result;
+      }
       const sep = currentDir.includes('\\') ? '\\' : '/';
       const artDir = `${currentDir.replace(/[\\/]$/, '')}${sep}ART`;
       const result = await window.libraryAPI.deleteGameAndRelatedFiles(

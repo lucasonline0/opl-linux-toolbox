@@ -1,211 +1,36 @@
-<div class="page flex h-full flex-col fade-in">
-  <!-- ── Header ──────────────────────────────────────────────── -->
-  <header
-    class="page-header glass flex items-center justify-between gap-4 px-6"
-  >
-    <div class="flex items-center gap-3">
-      <i-lucide name="library" size="26" class="text-accent"></i-lucide>
-      <div>
-        <h1 class="section-title text-2xl">Library</h1>
-        <p class="text-xs text-base-content/45">
-          {{ totalCount$ | async }} games mounted
-        </p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <!-- Search -->
-      <label class="input input-sm w-64 bg-base-100/60">
-        <i-lucide
-          name="search"
-          size="16"
-          class="text-base-content/40"
-        ></i-lucide>
-        <input
-          type="text"
-          placeholder="Search games…"
-          [value]="searchTerm"
-          (input)="setSearch($any($event.target).value)"
-        />
-        @if (searchTerm) {
-          <button class="opacity-60 hover:opacity-100" (click)="clearSearch()">
-            <i-lucide name="x" size="15"></i-lucide>
-          </button>
-        }
-      </label>
-
-      <select
-        class="select select-sm w-40 bg-base-100/60"
-        [value]="sortMode"
-        (change)="setSortMode($any($event.target).value)"
-      >
-        <option value="title-asc">Name (A–Z)</option>
-        <option value="title-desc">Name (Z–A)</option>
-        <option value="gameId-asc">Game ID (A–Z)</option>
-        <option value="gameId-desc">Game ID (Z–A)</option>
-      </select>
-
-      <div class="join">
-        <button
-          class="btn btn-sm join-item"
-          [class.btn-primary]="viewMode === 'grid'"
-          title="Grid view"
-          (click)="viewMode = 'grid'"
-        >
-          <i-lucide name="layout-grid" size="16"></i-lucide>
-        </button>
-        <button
-          class="btn btn-sm join-item"
-          [class.btn-primary]="viewMode === 'list'"
-          title="List view"
-          (click)="viewMode = 'list'"
-        >
-          <i-lucide name="list" size="16"></i-lucide>
-        </button>
-      </div>
-
-      <button
-        type="button"
-        class="btn btn-sm"
-        [disabled]="!(this._libraryService.hasCurrentDirectory$ | async)"
-        title="Refresh library"
-        (click)="this._libraryService.refreshGamesFiles()"
-      >
-        <i-lucide name="refresh-cw" size="16"></i-lucide>
-      </button>
-
-      @if (this._libraryService.hasCurrentDirectory$ | async) {
-        <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-sm btn-square">
-            <i-lucide name="ellipsis-vertical" size="16"></i-lucide>
-          </div>
-          <ul
-            tabindex="-1"
-            class="dropdown-content menu glass-strong rounded-box z-10 mt-1 w-60 p-2 shadow-xl"
-          >
-            <li>
-              <a (click)="downloadAllArt()">
-                <i-lucide name="image-down" size="16"></i-lucide>Download
-                artwork for all games
-              </a>
-            </li>
-            <li>
-              <a (click)="convertAllToZso()">
-                <i-lucide name="file-archive" size="16"></i-lucide>Convert all
-                PS2 ISOs to ZSO
-              </a>
-            </li>
-            <li>
-              <a (click)="openRenameDialog()">
-                <i-lucide name="text-cursor-input" size="16"></i-lucide>Rename
-                all games to convention…
-              </a>
-            </li>
-          </ul>
-        </div>
-      }
+<div class="library-page page fade-in">
+  <header class="library-header">
+    <div class="library-heading"><span class="page-kicker">Your collection</span><h1 class="section-title">Library</h1><p class="page-subtitle">{{ totalCount$ | async }} titles across your OPL workspace.</p></div>
+    <div class="library-tools">
+      <label class="search-box"><i-lucide name="search" size="16"></i-lucide><input type="text" placeholder="Search by title or game ID" [value]="searchTerm" (input)="setSearch($any($event.target).value)"/>@if(searchTerm){<button (click)="clearSearch()"><i-lucide name="x" size="14"></i-lucide></button>}</label>
+      <select class="select select-sm sort-select" [value]="sortMode" (change)="setSortMode($any($event.target).value)"><option value="title-asc">Name A–Z</option><option value="title-desc">Name Z–A</option><option value="gameId-asc">Game ID A–Z</option><option value="gameId-desc">Game ID Z–A</option></select>
+      <div class="view-switch"><button [class.active]="viewMode==='grid'" title="Grid view" (click)="viewMode='grid'"><i-lucide name="layout-grid" size="15"></i-lucide></button><button [class.active]="viewMode==='list'" title="List view" (click)="viewMode='list'"><i-lucide name="list" size="16"></i-lucide></button></div>
+      <button class="icon-tool" [disabled]="!(this._libraryService.hasCurrentDirectory$ | async)" title="Refresh library" (click)="this._libraryService.refreshGamesFiles()"><i-lucide name="refresh-cw" size="16"></i-lucide></button>
+      @if(this._libraryService.hasCurrentDirectory$ | async){<div class="dropdown dropdown-end"><button tabindex="0" class="icon-tool"><i-lucide name="ellipsis" size="17"></i-lucide></button><ul tabindex="-1" class="dropdown-content menu glass-strong z-10 mt-2 w-60 p-2 shadow-xl"><li><a (click)="downloadAllArt()"><i-lucide name="image-down" size="16"></i-lucide>Download all artwork</a></li><li><a (click)="convertAllToZso()"><i-lucide name="file-archive" size="16"></i-lucide>Convert PS2 ISOs to ZSO</a></li><li><a (click)="openRenameDialog()"><i-lucide name="text-cursor-input" size="16"></i-lucide>Rename to convention…</a></li></ul></div>}
     </div>
   </header>
 
-  <!-- ── System tabs ─────────────────────────────────────────── -->
-  <div class="flex items-center gap-2 px-6 py-4">
-    <button
-      class="seg-tab"
-      [class.active]="isActive('PS2')"
-      (click)="setTab('PS2')"
-    >
-      PlayStation 2
-      <span class="seg-count">{{ ps2Count$ | async }}</span>
-    </button>
-    <button
-      class="seg-tab"
-      [class.active]="isActive('PS1')"
-      (click)="setTab('PS1')"
-    >
-      PlayStation 1
-      <span class="seg-count">{{ ps1Count$ | async }}</span>
-    </button>
-    <button
-      class="seg-tab"
-      [class.active]="isActive('APPS')"
-      (click)="setTab('APPS')"
-    >
-      Apps
-      <span class="seg-count">{{ appsCount$ | async }}</span>
-    </button>
+  <div class="library-filterbar">
+    <div class="system-tabs">
+      <button class="seg-tab" [class.active]="isActive('PS2')" (click)="setTab('PS2')">PlayStation 2 <span class="seg-count">{{ ps2Count$ | async }}</span></button>
+      <button class="seg-tab" [class.active]="isActive('PS1')" (click)="setTab('PS1')">PlayStation <span class="seg-count">{{ ps1Count$ | async }}</span></button>
+      <button class="seg-tab" [class.active]="isActive('APPS')" (click)="setTab('APPS')">Apps <span class="seg-count">{{ appsCount$ | async }}</span></button>
+    </div>
+    @if(this._libraryService.hasCurrentDirectory$ | async){<button class="add-game" (click)="goImport()"><i-lucide name="plus" size="15"></i-lucide> Add games</button>}
   </div>
 
-  <!-- ── Body ────────────────────────────────────────────────── -->
-  <div class="library-body flex-1 overflow-y-auto px-6 py-5">
+  <div class="library-body">
     @if (!(this._libraryService.hasCurrentDirectory$ | async)) {
-      <!-- Nothing mounted -->
-      <div class="empty-state">
-        <div class="empty-orb">
-          <i-lucide name="folder-open" size="44"></i-lucide>
-        </div>
-        <h2 class="font-display mt-5 text-xl tracking-wide">
-          No directory mounted
-        </h2>
-        <p class="mt-1 max-w-sm text-sm text-base-content/50">
-          Mount your OPL drive or folder to browse and manage your PlayStation
-          game collection.
-        </p>
-        <button
-          class="btn btn-primary mt-5"
-          [disabled]="this._libraryService.loading$ | async"
-          (click)="this._libraryService.openAskDirectory()"
-        >
-          <i-lucide name="folder-open" size="18"></i-lucide>Mount Directory
-        </button>
-      </div>
+      <div class="library-empty glass-medium"><div class="empty-copy"><span class="page-kicker">Start your collection</span><h2>Connect a library to see your games</h2><p>Your covers, formats and game details will appear here as a rich visual collection.</p><button class="btn btn-primary" (click)="this._libraryService.openAskDirectory()"><i-lucide name="folder-open" size="17"></i-lucide>Choose library</button></div><div class="empty-shelves" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
     } @else if ((visibleGames$ | async)?.length === 0) {
-      <!-- Mounted but empty / no matches -->
-      <div class="empty-state">
-        <div class="empty-orb">
-          <i-lucide
-            [name]="searchTerm ? 'search-x' : 'gamepad-2'"
-            size="44"
-          ></i-lucide>
-        </div>
-        <h2 class="font-display mt-5 text-xl tracking-wide">
-          {{ searchTerm ? "No matching games" : "No games here yet" }}
-        </h2>
-        <p class="mt-1 max-w-sm text-sm text-base-content/50">
-          {{
-            searchTerm
-              ? "Try a different search term or switch systems."
-              : "Import a game to get started, or switch to the other system."
-          }}
-        </p>
-      </div>
+      <div class="empty-state"><div class="empty-orb"><i-lucide [name]="searchTerm ? 'search-x' : 'gamepad-2'" size="34"></i-lucide></div><h2>{{ searchTerm ? 'No matching games' : 'No games here yet' }}</h2><p>{{ searchTerm ? 'Try a different title, game ID or platform.' : 'Import a game or choose another platform.' }}</p>@if(!searchTerm){<button class="btn btn-primary btn-sm" (click)="goImport()">Import games</button>}</div>
     } @else {
-      <div
-        [class.library-grid]="viewMode === 'grid'"
-        [class.library-list]="viewMode === 'list'"
-      >
-        @for (item of visibleGames$ | async; track item.path || item.gameId) {
-          <app-gamecard
-            [game]="item"
-            [viewMode]="viewMode"
-            (viewDetails)="viewGameDetails($event)"
-            [class.list-card]="viewMode === 'list'"
-          ></app-gamecard>
-        }
+      <div [class.library-grid]="viewMode==='grid'" [class.library-list]="viewMode==='list'">
+        @for(item of visibleGames$ | async; track (item.path || item.gameId)+':'+$index){<app-gamecard [game]="item" [viewMode]="viewMode" (viewDetails)="viewGameDetails($event)" [class.list-card]="viewMode==='list'"></app-gamecard>}
       </div>
     }
   </div>
 </div>
 
-@if (showRenameDialog) {
-  <app-library-rename-dialog
-    (closed)="showRenameDialog = false"
-  ></app-library-rename-dialog>
-}
-
-@if (showArtworkBulkDialog) {
-  <app-artwork-bulk-dialog
-    [gameCount]="artworkBulkTargets.length"
-    (confirm)="onArtworkBulkConfirm($event)"
-    (closed)="showArtworkBulkDialog = false"
-  ></app-artwork-bulk-dialog>
-}
+@if(showRenameDialog){<app-library-rename-dialog (closed)="showRenameDialog=false"></app-library-rename-dialog>}
+@if(showArtworkBulkDialog){<app-artwork-bulk-dialog [gameCount]="artworkBulkTargets.length" (confirm)="onArtworkBulkConfirm($event)" (closed)="showArtworkBulkDialog=false"></app-artwork-bulk-dialog>}

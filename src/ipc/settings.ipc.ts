@@ -19,6 +19,12 @@ export function registerSettingsIpc(): void {
       key: K,
       value: AppSettings[K]
     ) => {
+      const allowed = new Set<keyof AppSettings>([
+        "lastDirectory", "autoReconnect", "autoArtwork", "downloadAllArtwork",
+        "verifySha256", "confirmDestructiveActions", "theme", "animations", "density", "accent",
+        "glassIntensity", "cornerRadius",
+      ]);
+      if (!allowed.has(key)) throw new Error("Unknown or read-only setting");
       return setSetting(key, value);
     }
   );

@@ -10,6 +10,8 @@ import { registerAppsIpc } from "./apps.ipc";
 import { registerVmcIpc } from "./vmc.ipc";
 import { registerZsoIpc } from "./zso.ipc";
 import { registerSettingsIpc } from "./settings.ipc";
+import { registerStorageIpc } from "./storage.ipc";
+import { registerMaintenanceIpc } from "./maintenance.ipc";
 
 export function registerAllIpc(): void {
   registerWindowIpc();
@@ -24,4 +26,6 @@ export function registerAllIpc(): void {
   registerVmcIpc();
   registerZsoIpc();
   registerSettingsIpc();
+  registerStorageIpc();
+  registerMaintenanceIpc();
 }

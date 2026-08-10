@@ -9,7 +9,7 @@
   >
     <figure class="row-art">
       @if (displayArt()) {
-        <img [src]="artSrc()" alt="" loading="lazy" />
+        <img [src]="artSrc()" alt="" loading="lazy" decoding="async" />
       } @else {
         <div class="row-no-art">
           <i-lucide name="image-off" size="18"></i-lucide>
@@ -90,7 +90,7 @@
     <div class="poster-art" [class.is-square]="game()?.system === 'APPS'">
       <div class="poster-art-clip">
         @if (displayArt()) {
-          <img [src]="artSrc()" alt="cover art" loading="lazy" />
+          <img [src]="artSrc()" alt="cover art" loading="lazy" decoding="async" />
         } @else {
           <div class="poster-no-art">
             <i-lucide name="image-off" size="40"></i-lucide>

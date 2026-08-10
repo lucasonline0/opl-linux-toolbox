@@ -1,186 +1,78 @@
-<div class="flex h-full flex-col">
-  <app-title-bar></app-title-bar>
+<div class="app-stage">
+  <div class="app-shell">
+    <app-title-bar></app-title-bar>
 
-  <!-- ── Update banner ─────────────────────────────────────────── -->
-  @if ((_updateService.result$ | async)?.updateAvailable && !(_updateService.dismissed$ | async)) {
-  @if ((_updateService.result$ | async); as update) {
-  <div class="flex items-center gap-3 border-b border-primary/30 bg-primary/15 px-4 py-2 text-sm">
-    <i-lucide name="sparkles" size="16" class="text-primary"></i-lucide>
-    <span>
-      A new version is available —
-      <span class="font-semibold">{{ update.latestVersion }}</span>
-      (you have {{ update.currentVersion }}).
-    </span>
-    <button class="btn btn-primary btn-xs ml-auto" (click)="_updateService.openRelease()">
-      <i-lucide name="download" size="14"></i-lucide> Download
-    </button>
-    <button
-      class="btn btn-ghost btn-xs btn-square"
-      (click)="_updateService.dismiss()"
-      title="Dismiss"
-    >
-      <i-lucide name="x" size="14"></i-lucide>
-    </button>
-  </div>
-  }
-  }
-
-  <div class="flex flex-1 min-h-0">
-    <!-- ── Navigation rail ─────────────────────────────────────── -->
-    <aside class="sidebar glass-strong flex w-60 flex-col relative z-30">
-      <div class="brand flex items-center gap-3 px-5 pt-5 pb-4">
-        <img src="icon.svg" alt="" class="h-9 w-9 drop-shadow-[0_0_8px_rgba(80,180,255,0.5)]" />
-        <div class="leading-tight">
-          <div class="font-display text-lg font-semibold tracking-wide">OrbitOPL</div>
-          <div class="text-[0.62rem] uppercase tracking-[0.25em] text-base-content/40">Toolbox</div>
+    @if ((_updateService.result$ | async)?.updateAvailable && !(_updateService.dismissed$ | async)) {
+      @if ((_updateService.result$ | async); as update) {
+        <div class="update-banner">
+          <i-lucide name="sparkles" size="15"></i-lucide>
+          <span>Version {{ update.latestVersion }} is available.</span>
+          <button class="btn btn-primary btn-xs" (click)="_updateService.openRelease()">Download</button>
+          <button class="icon-button" (click)="_updateService.dismiss()" title="Dismiss"><i-lucide name="x" size="14"></i-lucide></button>
         </div>
-      </div>
-      <div class="accent-line mx-4 h-px"></div>
+      }
+    }
 
-      <nav class="flex-1 overflow-y-auto py-3" [class.pointer-events-none]="this._libraryService.loading$ | async">
-        <a
-          routerLink="/library"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="library" size="19"></i-lucide>
-          <span>Library</span>
-        </a>
-        <a
-          routerLink="/invalid-files"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="triangle-alert" size="19"></i-lucide>
-          <span>Invalid Files</span>
-          @if((this._libraryService.totalInvalidFiles$ | async)) {
-          <span class="badge badge-sm badge-warning ml-auto font-semibold">{{
-            (this._libraryService.totalInvalidFiles$ | async) === 99
-              ? "99+"
-              : (this._libraryService.totalInvalidFiles$ | async)
-          }}</span>
+    <div class="shell-body">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark"><img src="icon.svg" alt="" /></span>
+          <div><strong>OPL Linux</strong><small>Toolbox</small></div>
+        </div>
+
+        <nav [class.pointer-events-none]="this._libraryService.loading$ | async">
+          <p class="nav-label">Workspace</p>
+          <a routerLink="/dashboard" routerLinkActive="active" class="nav-item"><i-lucide name="layout-dashboard" size="18"></i-lucide><span>Overview</span></a>
+          <a routerLink="/library" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="library" size="18"></i-lucide><span>Library</span></a>
+          <a routerLink="/import" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="disc-3" size="18"></i-lucide><span>Import</span></a>
+          <a routerLink="/artwork" routerLinkActive="active" class="nav-item"><i-lucide name="images" size="18"></i-lucide><span>Artwork</span></a>
+
+          <p class="nav-label nav-label-spaced">Manage</p>
+          <a routerLink="/memory-cards" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="hard-drive" size="18"></i-lucide><span>Memory cards</span></a>
+          <a routerLink="/invalid-files" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="triangle-alert" size="18"></i-lucide><span>Invalid files</span>@if((this._libraryService.totalInvalidFiles$ | async)){<span class="nav-count">{{ this._libraryService.totalInvalidFiles$ | async }}</span>}</a>
+          <a routerLink="/maintenance" routerLinkActive="active" class="nav-item"><i-lucide name="shield-check" size="18"></i-lucide><span>Maintenance</span></a>
+          <a routerLink="/logs" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="terminal" size="18"></i-lucide><span>Logs</span></a>
+          <a routerLink="/settings" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="settings" size="18"></i-lucide><span>Settings</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+          @if(this._libraryService.hasCurrentDirectory$ | async) {
+            @if(this._libraryService.storage$ | async; as storage) {
+              <div class="mounted-library">
+                <span class="mount-icon"><i-lucide name="hard-drive" size="16"></i-lucide></span>
+                <div class="min-w-0"><strong>{{ storage.name }}</strong><small>{{ storage.filesystem }} · {{ (storage.freeBytes / 1073741824).toFixed(1) }} GB free</small></div>
+                <span class="online-dot"></span>
+              </div>
+            }
+            <button class="sidebar-action ghost-danger" (click)="this._libraryService.safeUnmount()"><i-lucide name="unplug" size="15"></i-lucide> Safe unmount</button>
+          } @else {
+            <div class="library-prompt"><span class="mount-icon"><i-lucide name="folder-open" size="17"></i-lucide></span><div><strong>No library</strong><small>Connect an OPL folder</small></div></div>
+            <button class="sidebar-action primary-soft" [disabled]="this._libraryService.loading$ | async" (click)="this._libraryService.openAskDirectory()">
+              @if(this._libraryService.loading$ | async){<span class="loading loading-spinner loading-xs"></span>}@else{<i-lucide name="folder-open" size="15"></i-lucide>} Select folder
+            </button>
           }
-        </a>
-        <a
-          routerLink="/import"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="disc-3" size="19"></i-lucide>
-          <span>Import Games</span>
-        </a>
-        <a
-          routerLink="/memory-cards"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="hard-drive" size="19"></i-lucide>
-          <span>Memory Cards</span>
-        </a>
-
-        <div class="accent-line mx-4 my-3 h-px opacity-60"></div>
-
-        <a
-          routerLink="/logs"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="terminal" size="19"></i-lucide>
-          <span>Logs</span>
-        </a>
-        <a
-          routerLink="/settings"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="settings" size="19"></i-lucide>
-          <span>Settings</span>
-        </a>
-        <a
-          routerLink="/info"
-          routerLinkActive="active"
-          class="nav-item"
-          [class.disabled]="this._libraryService.loading$ | async"
-        >
-          <i-lucide name="info" size="19"></i-lucide>
-          <span>About</span>
-        </a>
-      </nav>
-
-      <!-- Mount control lives at the foot of the rail. -->
-      <div class="border-t border-base-content/10 p-3">
-        @if(this._libraryService.hasCurrentDirectory$ | async) {
-        <div class="mb-2 flex items-center gap-2 px-1">
-          <span class="relative flex h-2 w-2">
-            <span class="absolute inline-flex h-full w-full rounded-full bg-success opacity-60"></span>
-            <span class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
-          </span>
-          <span class="truncate font-mono text-[0.68rem] text-base-content/55" [title]="this._libraryService.currentDirectory$ | async">{{
-            this._libraryService.currentDirectory$ | async
-          }}</span>
+          <div class="sidebar-meta"><span>{{ appName }}</span><span>v{{ version }}</span><a routerLink="/info" title="About"><i-lucide name="info" size="14"></i-lucide></a></div>
         </div>
-        <button
-          class="btn btn-sm btn-block btn-outline btn-error"
-          [disabled]="this._libraryService.loading$ | async"
-          (click)="this._libraryService.disconnectCurrentDirectory()"
-        >
-          @if(this._libraryService.loading$ | async) {
-          <span class="loading loading-spinner loading-xs"></span>
-          } @else {
-          <i-lucide name="unplug" size="16"></i-lucide>
-          } Unmount
-        </button>
-        } @else {
-        <button
-          class="btn btn-sm btn-block btn-primary"
-          [disabled]="this._libraryService.loading$ | async"
-          (click)="this._libraryService.openAskDirectory()"
-        >
-          @if(this._libraryService.loading$ | async) {
-          <span class="loading loading-spinner loading-xs"></span>
-          } @else {
-          <i-lucide name="folder-open" size="16"></i-lucide>
-          } Mount Directory
-        </button>
-        }
-      </div>
-    </aside>
+      </aside>
 
-    <!-- ── Routed content ──────────────────────────────────────── -->
-    <main class="min-w-0 flex-1 overflow-hidden">
-      <router-outlet></router-outlet>
-    </main>
+      <section class="workspace">
+        <div class="context-bar">
+          @if(this._libraryService.storage$ | async; as storage) {
+            <div class="context-location"><span class="status-pulse"></span><div><strong>{{ storage.name }}</strong><small>{{ storage.mountpoint }}</small></div></div>
+            <span class="context-chip">{{ storage.filesystem }}</span>
+            <span class="context-chip muted">{{ (storage.freeBytes / 1073741824).toFixed(1) }} GB free</span>
+            <button class="icon-button context-refresh" (click)="this._libraryService.refreshStorageInfo()" title="Refresh storage"><i-lucide name="refresh-cw" size="15"></i-lucide></button>
+          } @else {
+            <div class="context-location"><span class="status-pulse offline"></span><div><strong>OPL workspace</strong><small>Ready for a library</small></div></div>
+          }
+          <div class="context-status">
+            @if(this._libraryService.loading$ | async){<span class="loading loading-spinner loading-xs"></span><span>{{ (this._libraryService.currentAction$ | async) || 'Working…' }}</span>}@else{<i-lucide name="check" size="14"></i-lucide><span>Ready</span>}
+          </div>
+        </div>
+        <main class="route-content"><router-outlet></router-outlet></main>
+      </section>
 
-    <!-- ── Import jobs rail ────────────────────────────────────── -->
-    <app-jobs-panel></app-jobs-panel>
+      <app-jobs-panel></app-jobs-panel>
+    </div>
   </div>
-
-  <!-- ── Status bar ────────────────────────────────────────────── -->
-  <footer class="status-bar glass-strong relative z-30 flex h-9 items-center gap-4 px-4 text-xs">
-    <div class="flex items-center gap-2">
-      @if(this._libraryService.loading$ | async) {
-      <span class="loading loading-spinner loading-xs text-accent"></span>
-      <span class="font-mono text-accent">{{
-        (this._libraryService.currentAction$ | async) || "Working…"
-      }}</span>
-      } @else {
-      <i-lucide name="circle-check" size="13" class="text-success"></i-lucide>
-      <span class="font-mono text-base-content/50">Idle</span>
-      }
-    </div>
-
-    <div class="ml-auto flex items-center gap-4 text-base-content/45">
-      @if(this._libraryService.hasCurrentDirectory$ | async) {
-      <span class="font-mono">{{ this._libraryService.librarySizeGb$ | async }} GB</span>
-      <span class="opacity-40">·</span>
-      }
-      <span class="font-display tracking-wider text-base-content/35">OrbitOPL v{{ version }}</span>
-    </div>
-  </footer>
 </div>

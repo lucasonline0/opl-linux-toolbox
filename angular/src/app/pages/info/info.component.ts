@@ -20,6 +20,6 @@ export class InfoComponent {
 
   openExternal(url: string, event: Event) {
     event.preventDefault();
-    window.open(url, '_blank');
+    void window.libraryAPI.openExternal(url);
   }
 }

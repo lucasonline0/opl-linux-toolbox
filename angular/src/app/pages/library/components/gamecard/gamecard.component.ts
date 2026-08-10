@@ -68,7 +68,7 @@ export class GamecardComponent {
   /** Base64 data-URL of the selected artwork, or null if none found. */
   readonly artSrc = computed(() => {
     const a = this.displayArt();
-    return a ? `data:image/png;base64,${a.base64}` : null;
+    return a ? (a.url || `data:image/png;base64,${a.base64}`) : null;
   });
 
   // ── Labels & badges ──────────────────────────────────────────────────

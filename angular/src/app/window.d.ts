@@ -106,6 +106,20 @@ declare interface Window {
       message?: string;
     }>;
 
+    clearArtworkCache: () => Promise<{ success: boolean }>;
+    openArtFolder: (root: string) => Promise<{ success: boolean; message?: string }>;
+    importArtworkManual: (root: string, gameId: string) => Promise<{ success: boolean; cancelled?: boolean; path?: string }>;
+    discoverStorage: () => Promise<StorageInfo[]>;
+    inspectStorage: (root: string) => Promise<StorageInfo>;
+    unmountStorage: (root: string) => Promise<{ success: boolean; message: string }>;
+    preflightSafeImport: (request: SafeImportRequest) => Promise<ImportPreflight>;
+    runSafeImport: (jobId: string, request: SafeImportRequest) => Promise<any>;
+    cancelSafeImport: (jobId: string) => Promise<boolean>;
+    onSafeImportProgress: (callback: (progress: SafeImportProgress) => void) => void;
+    removeAllSafeImportProgressListeners: () => void;
+    scanMaintenance: (root: string) => Promise<MaintenanceIssue[]>;
+    repairMaintenanceIssue: (root: string, issueId: string) => Promise<any>;
+
     /** Try to determine a game ID from a binary file via hex patterns. */
     tryDetermineGameIdFromHex: (filepath: string) => Promise<any>;
 
@@ -324,22 +338,7 @@ declare interface Window {
       entries: Array<{ label: string; path?: string; success: boolean; error?: string }>;
       message?: string;
     }>;
-
-    /** Move a file from source to destination. */
-    moveFile: (sourcePath: string, destPath: string) => Promise<any>;
-
-    /** Listen for file move progress events. */
-    onMoveFileProgress: (
-      callback: (progress: {
-        percent: number;
-        copiedMB: number;
-        totalMB: number;
-        elapsed: number;
-      }) => void,
-    ) => void;
-
-    /** Remove all file move progress listeners. */
-    removeAllMoveFileProgressListeners: () => void;
+    deleteUlGame: (root: string, gameId: string, removeArtwork: boolean) => Promise<{ success: boolean; entries: any[]; backup?: string }>;
 
     /** Listen for main-process log entries. */
     onMainLog: (
@@ -428,5 +427,71 @@ declare interface AppSettings {
   lastDirectory?: string;
   /** Whether to auto-reconnect to the last directory on startup. */
   autoReconnect: boolean;
+  autoArtwork: boolean;
+  downloadAllArtwork: boolean;
+  verifySha256: boolean;
+  confirmDestructiveActions: boolean;
+  theme: 'auto' | 'dark' | 'light';
+  animations: boolean;
+  density: 'comfortable' | 'compact';
+  accent: 'blue' | 'coral' | 'purple' | 'green' | 'amber';
+  glassIntensity: 'low' | 'medium' | 'high';
+  cornerRadius: 'subtle' | 'default' | 'soft';
+  githubTokenAvailable?: boolean;
 }
 
+declare interface StorageInfo {
+  name: string;
+  mountpoint: string;
+  source: string;
+  filesystem: string;
+  totalBytes: number;
+  freeBytes: number;
+  usedBytes: number;
+  removable: boolean;
+  connected: boolean;
+}
+
+declare interface SafeImportRequest {
+  sourcePath: string;
+  oplRoot: string;
+  gameId: string;
+  gameName: string;
+  media?: 'CD' | 'DVD';
+  keepOriginalName?: boolean;
+  verifySha256?: boolean;
+}
+
+declare interface ImportPreflight {
+  sourcePath: string;
+  sizeBytes: number;
+  filesystem: string;
+  destinationFormat: 'ISO' | 'ZSO' | 'UL';
+  strategy: 'direct-copy' | 'iso2opl' | 'zso-to-ul';
+  destinationDirectory: 'DVD' | 'CD';
+  methodLabel: string;
+  warning?: string;
+  gameId: string;
+  gameName: string;
+  destination: string;
+}
+
+declare interface SafeImportProgress {
+  jobId: string;
+  stage: string;
+  percent?: number;
+  bytes?: number;
+  totalBytes?: number;
+  bytesPerSecond?: number;
+  etaSeconds?: number | null;
+}
+
+declare interface MaintenanceIssue {
+  id: string;
+  category: string;
+  title: string;
+  gameId: string | null;
+  detail: string;
+  files: string[];
+  repairable: boolean;
+}

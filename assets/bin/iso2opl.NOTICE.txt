@@ -1,0 +1,8 @@
+iso2opl (Linux x86_64)
+
+Upstream: https://github.com/arcadenea/iso2opl
+Commit: e98ad288dd057152c2ece1bd1bac70dd701192dd
+This is the converter already used by the predecessor OPL toolbox workflow.
+It is derived from the Open PS2 Loader project. Upstream authors and project
+credits are preserved; see the repositories above and the application's GPLv3
+LICENSE.

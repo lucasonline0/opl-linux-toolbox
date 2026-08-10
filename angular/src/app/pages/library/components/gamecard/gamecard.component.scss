@@ -1,57 +1,55 @@
 :host {
   display: block;
+  content-visibility: auto;
+  contain: layout paint style;
+  contain-intrinsic-size: 172px 230px;
 }
-
 :host(.list-card) {
   max-width: none;
+  contain-intrinsic-size: auto 58px;
 }
-
-.tile {
-  cursor: pointer;
-}
-
+.tile,
 .game-row {
   cursor: pointer;
 }
-
-/* ── Grid poster ────────────────────────────────────────────── */
 .poster {
   height: 100%;
+  overflow: visible;
 }
-
 .poster-art {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3/4;
   width: 100%;
-  /* No overflow:hidden here — the dropdown menu must be able to extend
-     beyond the tile bounds. Image clipping lives on the inner wrapper. */
 }
-
-/* PS1 launcher apps (shown in APPS section for OPL 1.2+) use square tiles
-   so they visually differentiate from standard disc-game posters. */
 .poster-art.is-square {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1/1;
 }
-
 .poster-art-clip {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: inherit;
+  border-radius: 19px;
 }
-
+.poster-art-clip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 11, 16, 0.9), transparent 48%);
+  opacity: 0.5;
+}
 .poster-art-clip img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease;
+  transition:
+    transform 0.28s ease,
+    filter 0.28s ease;
 }
-
 .tile:hover .poster-art-clip img {
-  transform: scale(1.05);
+  transform: scale(1.025);
+  filter: saturate(1.06);
 }
-
 .poster-no-art {
   width: 100%;
   height: 100%;
@@ -59,151 +57,125 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  background: linear-gradient(160deg, oklch(28% 0.05 258), oklch(18% 0.04 262));
-  color: oklch(70% 0.06 240 / 0.45);
+  gap: 0.6rem;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 116, 82, 0.1),
+      transparent 40%
+    ),
+    linear-gradient(155deg, rgba(56, 60, 72, 0.58), rgba(28, 32, 42, 0.75));
+  color: rgba(192, 198, 211, 0.25);
 }
-
-/* Floating system tag */
 .poster-system {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.58rem;
+  left: 0.58rem;
   z-index: 2;
-  padding: 0.1rem 0.5rem;
-  border-radius: 0.4rem;
-  font-family: "Chakra Petch", sans-serif;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: oklch(98% 0.01 250);
-  background: oklch(64% 0.19 252 / 0.85);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 8px -2px oklch(64% 0.19 252 / 0.8);
+  padding: 0.2rem 0.46rem;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 620;
+  letter-spacing: 0.055em;
+  color: #fff4ef;
+  background: rgba(255, 116, 82, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 5px 13px rgba(0, 0, 0, 0.18);
 }
-
 .poster-system.is-ps1 {
-  background: oklch(60% 0.17 287 / 0.85);
-  box-shadow: 0 2px 8px -2px oklch(60% 0.17 287 / 0.8);
+  background: rgba(127, 167, 255, 0.68);
 }
-
 .poster-system.is-ps1-app {
-  background: oklch(66.696% 0.11697 186.07);
-  box-shadow: 0 2px 8px -2px oklch(66.696% 0.11697 186.07 / 0.8);
+  background: rgba(88, 185, 145, 0.67);
 }
-
-/* Kebab menu — fades in on hover */
 .poster-menu {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
+  top: 0.48rem;
+  right: 0.48rem;
   z-index: 3;
   opacity: 0;
-  transition: opacity 0.16s ease;
+  transition: opacity 0.18s;
 }
-
 .tile:hover .poster-menu,
 .poster-menu:focus-within {
   opacity: 1;
 }
-
+.poster-menu .btn {
+  border-radius: 9px !important;
+  background: rgba(16, 18, 24, 0.55) !important;
+  background: rgba(16, 18, 24, 0.88) !important;
+}
 .poster-overlay {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: auto 0 0;
   z-index: 2;
-  padding: 1.75rem 0.7rem 0.6rem;
+  padding: 2.2rem 0.78rem 0.7rem;
   background: linear-gradient(
     to top,
-    oklch(12% 0.04 262 / 0.96) 10%,
-    oklch(12% 0.04 262 / 0.7) 45%,
+    rgba(10, 12, 17, 0.96) 5%,
+    rgba(10, 12, 17, 0.68) 58%,
     transparent
   );
 }
-
 .poster-title {
-  font-weight: 600;
-  font-size: 0.85rem;
-  line-height: 1.2;
-  color: oklch(97% 0.02 250);
+  font-weight: 550;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: rgba(250, 250, 251, 0.94);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.42rem;
+  letter-spacing: -0.015em;
 }
-
 .poster-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.27rem;
 }
-
 .poster-size {
   margin-left: auto;
-  font-size: 0.65rem;
-  color: oklch(85% 0.02 250 / 0.55);
+  font-size: 0.57rem;
+  color: rgba(218, 221, 228, 0.38);
 }
-
-/* ── Chips (shared by grid + list) ──────────────────────────── */
 .chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.05rem 0.4rem;
-  border-radius: 0.35rem;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  background: oklch(50% 0.06 250 / 0.3);
-  color: oklch(88% 0.03 250 / 0.85);
-  border: 1px solid oklch(60% 0.08 250 / 0.18);
-  white-space: nowrap;
+  padding: 0.12rem 0.38rem;
+  font-size: 0.52rem;
 }
-
-.chip-region {
-  background: oklch(82% 0.13 212 / 0.16);
-  color: oklch(85% 0.1 212);
-  border-color: oklch(82% 0.13 212 / 0.3);
-}
-
-/* ── List row ───────────────────────────────────────────────── */
 .game-row {
   display: grid;
   grid-template-columns: 44px minmax(12rem, 1fr) 11ch 8ch 8ch 8ch 40px;
   align-items: center;
   gap: 0.75rem;
-  min-height: 52px;
-  padding: 0.375rem 0.75rem;
+  min-height: 58px;
+  padding: 0.4rem 0.7rem;
   overflow: visible;
 }
-
 .row-art {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.4rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .row-art img {
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
-
 .row-no-art {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.4rem;
-  background: oklch(30% 0.05 258 / 0.6);
-  color: oklch(70% 0.06 240 / 0.45);
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.2);
 }
-
 .row-title,
 .row-meta {
   min-width: 0;
@@ -211,26 +183,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .row-title {
-  font-weight: 600;
-  color: oklch(95% 0.02 250);
-}
-
-.row-meta {
+  font-weight: 540;
   font-size: 0.75rem;
-  color: oklch(85% 0.02 250 / 0.6);
+  color: rgba(245, 246, 248, 0.85);
 }
-
+.row-meta {
+  font-size: 0.63rem;
+  color: rgba(205, 209, 218, 0.38);
+}
 .row-actions {
   justify-self: end;
 }
-
-@media (max-width: 960px) {
+@media (max-width: 1050px) {
   .game-row {
     grid-template-columns: 44px minmax(8rem, 1fr) 11ch 40px;
   }
-
   .game-row .row-meta:nth-of-type(n + 2),
   .game-row .chip:not(.chip-region) {
     display: none;

@@ -1,7 +1,7 @@
 {
   "name": "orbitopl-toolbox",
   "version": "1.3.0",
-  "description": "A modern, cross-platform way to manage your OPL game collection. ",
+  "description": "Linux-first safe manager for Open PS2 Loader libraries.",
   "main": "dist/src/main.js",
   "author": "Luden",
   "email": "",
@@ -21,10 +21,12 @@
     "package:linux": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && PATH=\"$(brew --prefix binutils 2>/dev/null)/bin:$PATH\" electron-builder --linux",
     "package:all": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && PATH=\"$(brew --prefix binutils 2>/dev/null)/bin:$PATH\" electron-builder --win --mac --linux && node scripts/collect-distributables.js",
     "remove": "rimraf -rf ./dist && rimraf -rf ./build",
-    "electron": "electron"
+    "electron": "electron",
+    "test:core": "npm run build && node dist/src/tests/core.test.js",
+    "test:live-art": "npm run build && node dist/src/tests/artwork-live.js",
+    "test:live-ul": "npm run build && node dist/src/tests/ul-live-smoke.js"
   },
   "devDependencies": {
-    "7zip-bin": "^5.2.0",
     "concurrently": "^9.2.0",
     "electron": "^34.5.8",
     "electron-builder": "^25.1.8",
@@ -39,17 +41,19 @@
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1"
   },
-  "overrides": {
-    "extract-zip": {
-      "yauzl": "^3.0.0"
-    }
-  },
   "build": {
-    "productName": "OrbitOPLToolbox",
+    "npmRebuild": false,
+    "productName": "OPLLinuxToolbox",
+    "asarUnpack": [
+      "assets/bin/**"
+    ],
     "files": [
       "dist/**/*",
       "package.json",
-      "assets"
+      "assets",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md",
+      "README.md"
     ],
     "directories": {
       "output": "build"

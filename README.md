@@ -1,296 +1,90 @@
 ![Logo](angular/public/logo.svg)
 
-**OrbitOPL Toolbox** — a modern, cross-platform way to manage your PlayStation OPL game collection.
-
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
-![License](https://img.shields.io/badge/license-GPLv3-green)
-[![Releases](https://img.shields.io/github/v/release/Luden02/OrbitOPL-Toolbox)](https://github.com/Luden02/OrbitOPL-Toolbox/releases)
-[![AUR](https://img.shields.io/aur/version/orbitopl-toolbox-bin)](https://aur.archlinux.org/packages/orbitopl-toolbox-bin)
-
-# 📖 About
-
-OrbitOPL Toolbox is an open-source, cross-platform desktop application for organizing your PlayStation 2 (and PlayStation 1) game library for use with [Open PS2 Loader (OPL)](https://github.com/ps2homebrew/Open-PS2-Loader).
-
-It was created to fill the gap left by OPLManager, which lacks macOS and Linux support.
-The goal isn't to replace OPLManager, but to offer an alternative — one that's modern, intuitive, and built with technologies familiar to JavaScript developers.
-
-> Built with Electron + Angular, styled with Tailwind CSS & daisyUI. Cross-platform: **Windows, macOS, and Linux**.
-
-<img width="1316" height="747" alt="OrbitOPL Toolbox — library view" src="https://github.com/user-attachments/assets/38534dc9-83c1-40ba-9a24-f2e64f5106d0" />
-
-# ✨ Features
-
-### 🎮 Multi-system library
-
-- Manage **PS2** (DVD & CD), **PS1**, and **APPS** (homebrew) all in one place
-- System tabs with live counts, plus a **search** box, **sort** (by title or game ID), and **grid / list** view modes
-- Click any game for a rich **details view** — cover, screenshots, region, format, size, and metadata
-- At-a-glance **library stats**: total games mounted and per-system counts
-- Recognizes **UL** (split / fragmented) games
-
-### 📥 Importing
-
-- **PS2 DVD** — import `ISO` / `ZSO` images
-- **PS2 CD** — convert `CUE`/`BIN` (including multi-track) to a single `ISO`
-- **PS1** — convert `CUE`/`BIN` to `VCD` and auto-generate a **POPStarter** launcher
-- **APPS** — import homebrew `ELF` executables with a custom title
-- **Automatic game-ID detection** by scanning the disc image (no need to look it up manually)
-- **Queued batch imports** with live progress for long operations
-
-<img width="1496" height="821" alt="OrbitOPL Toolbox — import view" src="https://github.com/user-attachments/assets/e9aac4f1-821e-40fe-b37f-8a66074b1434" />
-
-### 🖼️ Artwork
-
-- Download cover, icon, and screenshot art (`COV` / `ICO` / `SCR`) for **PS1 & PS2**
-- Fetch art for a **single game** or for your **entire library** in one click
-- Sourced from the [PSX / PS2 OPL Art Database](https://github.com/Luden02/psx-ps2-opl-art-database)
-
-### 🗜️ Compression
-
-- Compress PS2 `ISO` → `ZSO` (LZ4) to save disk space — single game or **bulk** the whole library
-- Optionally delete the original `ISO` after compression
-
-### ⚙️ Per-game configuration
-
-- Edit OPL per-game settings (`CFG/<GAMEID>.cfg`) directly from the UI
-- Set the **display title**, toggle **compatibility modes**, and assign **VMC** slots
-- Unknown / OPL-written keys are preserved
-
-### 💾 Virtual Memory Cards (VMC)
-
-- Create, list, and delete OPL-compatible virtual memory cards (8 / 16 / 32 / 64 MB)
-
-### 🧹 File maintenance
-
-- **Invalid-file detection** for malformed or wrongly-named files
-- **Bulk auto-correction** — discover game IDs and rename in one pass, with optional artwork download
-- **Rename to convention** — switch between the legacy (`GAMEID.Title.iso`) and new OPL naming styles
-- **Safe delete** — removes the game image, its artwork, and any paired PS1 launcher
-
-### 🛠️ Quality of life
-
-- **Auto-reconnect** to your last library on launch
-- Real-time **logs** viewer with verbose mode
-- Built-in **update check**
-- Window-close guard while an import is in progress
-
-# 💻 Installation
-
-Grab the latest build from the [Releases](https://github.com/Luden02/OrbitOPL-Toolbox/releases) page.
-
-On Arch Linux you can also use the [AUR binary](https://aur.archlinux.org/packages/orbitopl-toolbox-bin) or [AUR git](https://aur.archlinux.org/packages/orbitopl-toolbox-git) packages (thanks to u/m0tic).
-
-### 🪟 Windows
-
-1. Download the **`.exe`** installer (or the portable **`.zip`** if you'd rather not install).
-2. Run it — the installer walks you through setup; the `.zip` just needs extracting, then run `OrbitOPLToolbox.exe`.
-3. If **SmartScreen** appears, click **"More info" → "Run anyway"** (the app is unsigned but 100% safe).
-
-### 🍏 macOS
-
-1. Download the `.dmg` for your architecture:
-   - **arm64** (Apple Silicon — _recommended and tested_)
-   - **x64** (Intel Macs)
-2. Open the `.dmg` and drag **OrbitOPLToolbox** to your **Applications** folder.
-3. Because the app is **unsigned** (but **100% safe**), macOS quarantines it. Remove the quarantine flag by running this in your **terminal**:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/OrbitOPLToolbox.app
-   ```
-4. **Run** the app.
-
-### 🐧 Linux
-
-1. Download the **`.AppImage`**, **`.deb`**, or **`.zip`** (whichever suits your distro).
-2. For the **AppImage**: make it executable and run it. For the **`.deb`**: install it with your package manager. For the **`.zip`**: extract and run the `OrbitOPLToolbox` binary.
-
-# 🚀 How-To Guide
-
-## 1. Mount your library
-
-On first launch you'll be asked to **mount a directory** — this is your OPL root: an internal folder or an external / USB drive that OPL reads from.
-
-- Click **Mount Directory** and pick the folder.
-- If it isn't already an OPL layout, the app offers to create the required folders (`CD`, `DVD`, `VCD`, `POPS`, `APPS`, `ART`, `CFG`, `VMC`) for you.
-- Enable **Reconnect on launch** in Settings and the app will re-mount this drive automatically next time it starts.
-
-> Everything else in the app operates on the currently mounted directory. Switch drives anytime by mounting a different folder.
-
-## 2. Browse the library
-
-The **Library** page is your home base.
-
-- **System tabs** (PlayStation 2 / PlayStation 1 / Apps) filter the view; each shows a live count.
-- Use the **search** box, the **sort** dropdown (Name or Game ID, A–Z / Z–A), and the **grid / list** toggle to find things fast.
-- **Click a game** to open its **details view** — cover art, screenshots, region, format, size, and any available metadata.
-- Each game's **⋮ menu** exposes per-game actions: *Fetch artwork*, *Game settings*, *Convert to ZSO*, *Rename*, and *Delete*.
-- The **⋮ menu in the top-right** runs library-wide actions (see below).
-
-## 3. Import games
-
-Go to the **Import** page and follow the three steps:
-
-1. **Pick the disc type:**
-   | Type | Accepts | What happens |
-   |------|---------|--------------|
-   | **PS2 DVD** | `.iso` / `.zso` | Copied into `DVD/` |
-   | **PS2 CD** | `.bin` / `.cue` | Converted to a single `.iso` in `CD/` |
-   | **PS1 / POPS** | `.cue` | Converted to `.vcd`, plus a POPStarter launcher in `POPS/` |
-   | **App / Homebrew** | `.elf` | Copied into its own `APPS/` folder with a `title.cfg` launcher |
-
-2. **Set options:**
-   - **Download artwork after import** — grabs cover/icon/screenshot automatically.
-   - *(PS2 DVD)* **Use new OPL naming** — saves as `<Title>.iso` instead of `SLES_123.45.<Title>.iso`; OPL reads the game ID from the disc's `SYSTEM.CNF`.
-   - *(PS1)* **POPStarter prefix** — `XX.` for USB / MX4SIO, or `SB.` for an SMB network share.
-
-3. **Select files & review** — add one or many files. The app auto-detects the game ID and name by reading each disc; if something can't be resolved it's flagged so you can fill it in manually. Click **Import** and watch the queued progress.
-
-## 4. Download artwork
-
-- **One game:** use the game's **⋮ → Fetch artwork**.
-- **Whole library:** use the top-right **⋮ → Download artwork for all games**.
-
-Art comes from the [PSX / PS2 OPL Art Database](https://github.com/Luden02/psx-ps2-opl-art-database) and lands in the `ART/` folder as `GAMEID_COV / _ICO / _SCR`.
-
-## 5. Compress ISO → ZSO
-
-ZSO is an LZ4-compressed disc image that saves space while staying OPL-compatible.
-
-- **One game:** **⋮ → Convert to ZSO**.
-- **Whole library:** top-right **⋮ → Convert all PS2 ISOs to ZSO**.
-
-You can choose to delete the original `.iso` after a successful conversion.
-
-## 6. Configure a game
-
-Open **⋮ → Game settings** on any PS2 game (or a PS1 launcher) to edit its OPL `.cfg`:
-
-- **Display title** — the name OPL shows instead of the filename.
-- **Compatibility modes** — toggle OPL's per-game compatibility flags.
-- **VMC slots** — assign a virtual memory card to Slot 1 / Slot 2.
-
-Any other keys already in the file (DMA settings, etc.) are preserved untouched.
-
-## 7. Virtual Memory Cards
-
-On the **Memory Cards** page you can **create** a blank VMC (8 / 16 / 32 / 64 MB), see all existing cards, and **delete** ones you no longer need. New cards are formatted by OPL on first use. Assign them to games from each game's settings dialog.
-
-## 8. Fix invalid / mislabeled files
-
-The **Invalid Files** page lists images OPL wouldn't recognise (usually a non-standard filename).
-
-- **Rename Tool** (per file) — enter the game ID and title manually, optionally fetching artwork.
-- **Bulk Auto-Correction** — reads every invalid disc image (ISO directly, ZSO on the fly) to discover its game ID, then renames everything into the convention you choose (**new** `<Title>.iso` or **old** `<GAMEID>.<Title>.iso`), optionally fetching artwork as it goes.
-
-## 9. Rename to a naming convention
-
-Switch a single game (**⋮ → Rename to convention**) or your whole library (top-right **⋮ → Rename all games to convention**) between:
-
-- **New** — `<Title>.iso` (OPL reads the ID from the disc)
-- **Old** — `<GAMEID>.<Title>.iso` (maximally compatible with older OPL builds)
-
-## 10. Settings, logs & updates
-
-- **Settings** — toggle *Reconnect on launch*, see your last mounted directory, and enable *Verbose logging*.
-- **Logs** — a real-time, in-app log viewer; turn on verbose mode when reporting an issue.
-- **Updates** — Settings → *Check for updates* compares your version against the latest GitHub release.
-
-# 📁 OPL folder layout
-
-OrbitOPL Toolbox reads and writes the standard OPL directory structure:
-
+# OrbitOPL Toolbox
+
+OrbitOPL Toolbox is a Linux-first Electron + Angular desktop application for
+managing Open PS2 Loader libraries safely. It works on a local folder, USB
+drive, NAS mount, or any other directory already mounted by the operating
+system. It never formats a device and never requires `sudo`.
+
+## Features
+
+- Browse PS2 DVD/CD, PS1/POPS and APPS/ELF libraries.
+- Import ISO, ZSO, CUE/BIN and ELF files with queued progress.
+- Detect game IDs, normalize names, rename and remove individual games safely.
+- Use atomic `.part` copies, optional SHA-256 verification and targeted rollback.
+- Convert ISO to ZSO and handle FAT32 UL/USBExtreme installations.
+- Download and repair artwork from the PSX/PS2 OPL art database.
+- Manage CFG settings, VMC cards, maintenance findings and technical logs.
+- Discover Linux mounts, inspect capacity/filesystem and unmount devices safely.
+
+The online catalog, Store and external download-source integrations are not
+part of the application. The app operates on libraries and files supplied by
+the user; it does not search for or distribute commercial game downloads.
+
+## Development
+
+```bash
+npm install
+npm start                 # build and launch Electron
+npm run build             # TypeScript main/preload build
+cd angular && npm run build
+npm run test:core         # safety, path containment and artwork tests
+npm run test:live-art     # optional live artwork smoke test
+npm run test:live-ul      # optional UL conversion smoke test
 ```
+
+The main process owns filesystem, storage, import and external-command access.
+The renderer uses a restricted preload API (`contextIsolation: true`,
+`nodeIntegration: false`). External commands are launched with argument arrays,
+never `shell: true`.
+
+## Architecture
+
+- `src/main.ts` — Electron lifecycle and window security.
+- `src/preload.ts` — small, validated renderer bridge.
+- `src/ipc/` — typed IPC handlers for library, import, artwork, storage,
+  maintenance, VMC, CFG and logs.
+- `src/services/` — safe-copy/import, UL conversion, artwork, storage and
+  library services.
+- `angular/src/app/` — dashboard, library, import, artwork, VMC, maintenance,
+  settings, logs and game details pages.
+
+## OPL layout
+
+```text
 OPL_ROOT/
-├── CD/     — PS2 CD-format games (.iso / .zso)
-├── DVD/    — PS2 DVD-format games (.iso / .zso)
-├── VCD/    — PS1 games (.vcd)
-├── POPS/   — PS1 POPStarter launchers (.elf) + POPS VMCs
-├── APPS/   — Homebrew apps (one folder each, with title.cfg)
-├── ART/    — Artwork (GAMEID_COV.png, GAMEID_ICO.png, GAMEID_SCR.png)
-├── CFG/    — Per-game OPL settings (GAMEID.cfg)
-└── VMC/    — Virtual memory cards (.bin)
+├── CD/ DVD/       PS2 images (.iso/.zso)
+├── VCD/ POPS/     PS1 games and POPStarter launchers
+├── APPS/           ELF applications
+├── ART/            artwork
+├── CFG/            per-game settings
+└── VMC/            virtual memory cards
 ```
 
-Game IDs follow the PS2 format `XXXX_###.##` (e.g. `SLUS_123.45`); the region is derived from the prefix.
+## Project origins
 
-# 📜 License
+This project is based on and evolves from **OrbitOPL Toolbox** by **Luden02**:
 
-This project is licensed under the GNU General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
+https://github.com/Luden02/OrbitOPL-Toolbox
 
-# 🤝 Contributing
+The upstream project is licensed under GPL-3.0. Its license, relevant copyright
+notices and contributor history remain part of this repository; the current
+maintainer does not claim authorship of the original project.
 
-Contributions are welcome! Here's how you can help improve OrbitOPL Toolbox:
+## Third-party projects
 
-## Ways to Contribute
+- **PSX / PS2 OPL Art Database**, maintained by Luden02, supplies artwork
+  discovery for games in the user's library. It is a dump of the OPL Manager
+  GameArt Database; this project does not claim ownership or invent a license
+  for those images.
+- **Open PS2 Loader**, maintained by the ps2homebrew contributors, defines the
+  OPL folder, CFG, VMC and artwork conventions implemented here. OPL itself is
+  not bundled.
 
-- **Bug Reports** — found an issue? Open a bug report with detailed steps to reproduce.
-- **Feature Requests** — have an idea for improvement? Submit a feature request.
-- **Code Contributions** — submit pull requests for bug fixes or new features.
-- **Testing** — test new releases and provide feedback.
+See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for repositories,
+license notes and usage details. No online catalog or download provider is
+included in the current build.
 
-## 🧰 Development Setup
-
-After cloning the repo, get a working dev environment in one command.
-
-### ⚡ Automated (recommended)
-
-A setup script detects your OS, installs the required tooling (Node.js, Git, and `binutils` for Linux `.deb` packaging), and installs the npm dependencies for **both** the Electron root project and the Angular renderer.
-
-**macOS / Linux**
-
-```bash
-./scripts/setup.sh
-```
-
-**Windows** (PowerShell)
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/setup.ps1
-```
-
-If you already have Node.js installed, you can also just run:
-
-```bash
-npm run setup
-```
-
-> The script uses your platform's package manager — **Homebrew** on macOS; **apt / dnf / pacman / zypper** on Linux; **winget** (or **Chocolatey**) on Windows. Install the package manager first if you don't have one.
-
-### 🔧 Manual
-
-Prefer to do it yourself? Install these prerequisites, then install dependencies in both projects:
-
-1. **Node.js 20.19+** (22 LTS or 24 recommended) and **npm** — https://nodejs.org
-2. **Git** — https://git-scm.com
-3. _(Linux packaging only)_ **binutils** for the GNU `ar` tool, required to build the `.deb`.
-   - macOS: `brew install binutils`
-   - Debian/Ubuntu: `sudo apt-get install binutils`
-4. Install dependencies for both the root and Angular projects:
-
-   ```bash
-   npm install                          # Electron main process (repo root)
-   cd angular && npm install && cd ..   # Angular renderer
-   ```
-
-### ▶️ Running
-
-```bash
-npm run app:serve       # full dev mode: Angular dev server + Electron with hot-reload
-npm start               # build once and launch
-cd angular && ng test   # run the Angular unit tests
-```
-
-### 📦 Packaging
-
-```bash
-npm run package:win     # Windows (NSIS installer + portable ZIP)
-npm run package:mac     # macOS (DMG, x64 + arm64)
-npm run package:linux   # Linux (DEB, AppImage, ZIP)
-```
-
-## Pull Request Process
-
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make your changes and commit them with clear messages.
-4. Push to your fork and submit a pull request.
-5. Ensure your code follows the project's coding standards.
+OrbitOPL Toolbox is distributed under GPL-3.0. Original OrbitOPL credits and
+license are preserved in `LICENSE`.

@@ -155,7 +155,9 @@ export async function importPs1Game(
     if (downloadArtwork) {
       if (onProgress) onProgress(93, "Downloading artwork");
       try {
-        await downloadArtByGameId(artDir, gameId, "PS1", elfFilename, ["COV"]);
+        // The remote game folder is authoritative; fetch every valid asset,
+        // not only the legacy cover preset.
+        await downloadArtByGameId(artDir, gameId, "PS1", elfFilename);
       } catch {
         // Art download failure is non-critical
       }
@@ -178,4 +180,3 @@ export async function importPs1Game(
     };
   }
 }
-

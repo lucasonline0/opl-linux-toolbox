@@ -8,6 +8,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { JobsPanelComponent } from './shared/components/jobs-panel/jobs-panel.component';
 import { TitleBarComponent } from './shared/components/title-bar/title-bar.component';
 import { UpdateService } from './shared/services/update.service';
+import AppConfig from '../../../app-config.json';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +27,7 @@ import { UpdateService } from './shared/services/update.service';
 export class AppComponent {
   public currentDirectory = 'None';
   public readonly version = BuildInfo.version;
+  public readonly appName = AppConfig.name;
   constructor(
     private readonly _logger: LogsService,
     public readonly _libraryService: LibraryService,
@@ -40,7 +42,7 @@ export class AppComponent {
       `App initialized (${BuildInfo.version}) [OS: ${os}]`,
     );
 
-    window.windowAPI.wmInfo().then((info) => {
+    window.windowAPI?.wmInfo?.().then((info) => {
       if (info.name) {
         this._logger.log('AppComponent', `Desktop environment: ${info.name}`);
       }
