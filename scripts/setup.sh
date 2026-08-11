@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# OrbitOPL Toolbox — first-time contributor setup (macOS & Linux)
+# OPL Linux Toolbox — first-time contributor setup (macOS & Linux)
 #
 # Detects the host OS / package manager and installs everything needed to
 # develop the app, then installs the npm dependencies for both the Electron
@@ -104,7 +104,7 @@ ensure() {
 }
 
 # ── Main ────────────────────────────────────────────────────────────────────
-bold "OrbitOPL Toolbox — contributor setup ($OS)"
+bold "OPL Linux Toolbox — contributor setup ($OS)"
 detect_pkg_manager
 info "Using package manager: $PKG"
 

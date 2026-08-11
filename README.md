@@ -1,8 +1,8 @@
-![Logo](angular/public/logo.svg)
+![OPL Linux Toolbox](angular/public/icon.svg)
 
-# OrbitOPL Toolbox
+# OPL Linux Toolbox
 
-OrbitOPL Toolbox is a Linux-first Electron + Angular desktop application for
+OPL Linux Toolbox is a Linux-first Electron + Angular desktop application for
 managing Open PS2 Loader libraries safely. It works on a local folder, USB
 drive, NAS mount, or any other directory already mounted by the operating
 system. It never formats a device and never requires `sudo`.
@@ -64,7 +64,8 @@ OPL_ROOT/
 
 ## Project origins
 
-This project is based on and evolves from **OrbitOPL Toolbox** by **Luden02**:
+OPL Linux Toolbox is based on and evolved from **OrbitOPL Toolbox** by
+**Luden02**:
 
 https://github.com/Luden02/OrbitOPL-Toolbox
 
@@ -86,5 +87,5 @@ See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for repositories,
 license notes and usage details. No online catalog or download provider is
 included in the current build.
 
-OrbitOPL Toolbox is distributed under GPL-3.0. Original OrbitOPL credits and
+OPL Linux Toolbox is distributed under GPL-3.0. Original OrbitOPL credits and
 license are preserved in `LICENSE`.

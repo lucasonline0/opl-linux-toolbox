@@ -3,7 +3,7 @@ import { createLogger } from "../logger";
 
 const log = createLogger("update");
 
-const REPO = "Luden02/OrbitOPL-Toolbox";
+const REPO = "lucasonline0/opl-linux-toolbox";
 const RELEASES_URL = `https://api.github.com/repos/${REPO}/releases?per_page=10`;
 
 export interface UpdateCheckResult {
@@ -51,7 +51,7 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
     const response = await fetch(RELEASES_URL, {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "OrbitOPL-Toolbox",
+        "User-Agent": "OPL-Linux-Toolbox",
       },
     });
 
