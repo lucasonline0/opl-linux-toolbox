@@ -370,6 +370,8 @@ declare interface Window {
 
     /** Check for application updates. */
     checkForUpdates: () => Promise<UpdateCheckResult>;
+    /** Download and install the latest verified Linux release. */
+    installLatestUpdate: () => Promise<void>;
 
     /** Open a URL in the default system browser. */
     openExternal: (url: string) => Promise<boolean>;

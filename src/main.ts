@@ -40,7 +40,8 @@ function createWindow() {
     title: `${APP_CONFIG.name} (${PackageInfo.version})`,
     icon: path.join(__dirname, "assets", "applogo", "icon_512x512.png"),
     frame: isMac,
-    backgroundColor: "#090b11",
+    transparent: !isMac,
+    backgroundColor: isMac ? "#090b11" : "#00000000",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

@@ -1,4 +1,4 @@
-![OPL Linux Toolbox](angular/public/icon.svg)
+![OPL Linux Toolbox](angular/public/logo.png)
 
 # OPL Linux Toolbox
 

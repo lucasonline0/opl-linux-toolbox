@@ -6,6 +6,7 @@ import {
   directoryExists,
 } from "../services/settings.service";
 import { checkForUpdates } from "../services/update.service";
+import { installLatestLinuxUpdate } from "../services/linux-updater.service";
 
 export function registerSettingsIpc(): void {
   ipcMain.handle("get-settings", async () => {
@@ -35,5 +36,9 @@ export function registerSettingsIpc(): void {
 
   ipcMain.handle("check-for-updates", async () => {
     return checkForUpdates();
+  });
+
+  ipcMain.handle("install-latest-update", async () => {
+    await installLatestLinuxUpdate();
   });
 }

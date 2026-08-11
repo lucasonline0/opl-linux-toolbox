@@ -4,11 +4,19 @@
 
     @if ((_updateService.result$ | async)?.updateAvailable && !(_updateService.dismissed$ | async)) {
       @if ((_updateService.result$ | async); as update) {
-        <div class="update-banner">
-          <i-lucide name="sparkles" size="15"></i-lucide>
-          <span>Version {{ update.latestVersion }} is available.</span>
-          <button class="btn btn-primary btn-xs" (click)="_updateService.openRelease()">Download</button>
-          <button class="icon-button" (click)="_updateService.dismiss()" title="Dismiss"><i-lucide name="x" size="14"></i-lucide></button>
+        <div class="update-overlay" role="dialog" aria-modal="true" aria-label="Application update available">
+          <section class="update-dialog">
+            <span class="update-icon"><i-lucide name="download" size="20"></i-lucide></span>
+            <div>
+              <p class="page-kicker">Update available</p>
+              <h2>OPL Linux Toolbox {{ update.latestVersion }}</h2>
+              <p>A newer version is ready. The package checksum is verified before the native installer runs.</p>
+            </div>
+            <div class="update-actions">
+              <button class="btn btn-ghost btn-sm" (click)="_updateService.dismiss()">Not now</button>
+              <button class="btn btn-primary btn-sm" (click)="_updateService.installLatest()"><i-lucide name="download" size="15"></i-lucide> Install update</button>
+            </div>
+          </section>
         </div>
       }
     }
@@ -16,7 +24,7 @@
     <div class="shell-body">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark"><img src="icon.svg" alt="" /></span>
+          <span class="brand-mark"><img src="logo.png" alt="OPL Linux Toolbox" /></span>
           <div><strong>OPL Linux</strong><small>Toolbox</small></div>
         </div>
 

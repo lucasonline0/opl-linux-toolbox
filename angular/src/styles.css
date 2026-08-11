@@ -22,15 +22,15 @@
   --color-base-content: oklch(93% 0.025 250);
 
   /* Electric PlayStation blue */
-  --color-primary: #ff7048;
-  --color-primary-content: #fff8f5;
+  --color-primary: #3b82f6;
+  --color-primary-content: #ffffff;
 
   /* Indigo / violet secondary */
   --color-secondary: #75a7ff;
   --color-secondary-content: #0d0f14;
 
   /* Cyan glow accent */
-  --color-accent: #ff8b6a;
+  --color-accent: #60a5fa;
   --color-accent-content: #0d0f14;
 
   --color-neutral: oklch(30% 0.04 258);

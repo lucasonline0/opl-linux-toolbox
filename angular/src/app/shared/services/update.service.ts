@@ -61,4 +61,12 @@ export class UpdateService {
   public dismiss(): void {
     this.dismissedSubject.next(true);
   }
+
+  public async installLatest(): Promise<void> {
+    if (!window.libraryAPI?.installLatestUpdate) {
+      this.openRelease();
+      return;
+    }
+    await window.libraryAPI.installLatestUpdate();
+  }
 }

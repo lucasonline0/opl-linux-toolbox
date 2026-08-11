@@ -289,6 +289,7 @@ function buildLibraryAPI() {
     setSetting: (key: string, value: unknown) =>
       ipcRenderer.invoke("set-setting", key, value),
     checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+    installLatestUpdate: () => ipcRenderer.invoke("install-latest-update"),
     openExternal: (url: string) => ipcRenderer.invoke("open-external", url),
 
     // ── Logs ───────────────────────────────────────
