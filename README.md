@@ -1,4 +1,6 @@
-![OPL Linux Toolbox](angular/public/logo.png)
+<p align="center">
+  <img src="angular/public/logo.png" alt="OPL Linux Toolbox" width="160" />
+</p>
 
 # OPL Linux Toolbox
 
