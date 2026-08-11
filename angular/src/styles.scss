@@ -76,7 +76,7 @@ app-root { position:relative;z-index:1;display:block;height:100%;overflow:hidden
 *::-webkit-scrollbar-thumb:hover { background:rgba(174,181,197,.34);background-clip:content-box; }
 ::selection { background:rgba(59,130,246,.32); }
 
-a:not(.nav-item):not(.btn) { color:var(--accent-highlight); }
+a:not(.nav-item):not(.btn):not(.hero-button) { color:var(--accent-highlight); }
 .text-accent { color:var(--accent-highlight)!important; }
 .badge-accent,.progress-primary,.progress-accent { --badge-color:var(--accent-primary);color:var(--accent-highlight)!important; }
 progress::-webkit-progress-value,.progress::-webkit-progress-value { background:var(--accent-gradient)!important; }
@@ -123,10 +123,11 @@ progress::-webkit-progress-value,.progress::-webkit-progress-value { background:
    but no longer paint the normal application accent. Semantic warning/error
    colors are intentionally left to their page-level status styles. */
 .update-banner { color:var(--accent-highlight); background:var(--accent-soft); }
-.hero-label,.hero-button,.queue-action,.health-foot a,.visual-disc,
+.hero-label,.queue-action,.health-foot a,.visual-disc,
 .feature-strip article>span,.summary-icon,.repair-button,.jobs-rail:hover,
 .window-dot,.issue-icon,.issue-files span,.empty-orb { color:var(--accent-highlight)!important; }
 .hero-button { background:var(--accent-gradient)!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 9px 24px var(--accent-shadow)!important; }
+.hero-button,.hero-button i-lucide,.hero-button svg { color:#fff!important;stroke:currentColor!important; }
 .hero-glow,.connect-hero::before { background:var(--accent-soft)!important; }
 .storage-ring { background:conic-gradient(from -90deg,var(--accent-primary) calc(var(--usage)*1%),rgba(255,255,255,.07) 0)!important; box-shadow:0 0 32px var(--accent-shadow)!important; }
 .soft-progress span { background:var(--accent-gradient)!important; box-shadow:0 0 12px var(--accent-shadow)!important; }
