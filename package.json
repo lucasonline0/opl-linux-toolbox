@@ -6,6 +6,7 @@
   "author": "lucasonline0",
   "email": "",
   "license": "GPL-3.0-only",
+  "appId": "io.github.lucasonline0.opl-linux-toolbox",
   "repository": {
     "type": "git",
     "url": "https://github.com/lucasonline0/opl-linux-toolbox.git"
@@ -22,7 +23,7 @@
     "start": "npm run build:info && npm run build && electron ./dist/src/main.js",
     "package:win": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && electron-builder --win",
     "package:mac": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && electron-builder --mac",
-    "package:linux": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && PATH=\"$(brew --prefix binutils 2>/dev/null)/bin:$PATH\" electron-builder --linux",
+    "package:linux": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && electron-builder --linux",
     "package:all": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && PATH=\"$(brew --prefix binutils 2>/dev/null)/bin:$PATH\" electron-builder --win --mac --linux && node scripts/collect-distributables.js",
     "remove": "rimraf -rf ./dist && rimraf -rf ./build",
     "electron": "electron",
@@ -97,24 +98,33 @@
       "target": [
         {
           "target": "deb",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        },
+        {
+          "target": "pacman",
+          "arch": ["x64"]
         },
         {
           "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
-      "category": "Utility",
+      "artifactName": "opl-linux-toolbox-${version}-x86_64.${ext}",
+      "category": "Utility;Game",
+      "icon": "assets/applogo",
+      "synopsis": "Manage Open PS2 Loader libraries on Linux",
+      "description": "Manage Open PS2 Loader libraries on Linux",
+      "desktop": {
+        "Name": "OPL Linux Toolbox",
+        "Comment": "Manage Open PS2 Loader libraries on Linux",
+        "Categories": "Utility;Game;",
+        "Terminal": "false",
+        "StartupWMClass": "opl-linux-toolbox"
+      },
       "maintainer": "lucasonline0",
       "vendor": "lucasonline0"
     }
