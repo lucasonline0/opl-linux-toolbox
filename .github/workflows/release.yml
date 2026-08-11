@@ -39,6 +39,9 @@ jobs:
       - name: Install Angular dependencies
         run: npm ci --prefix angular
 
+      - name: Generate build metadata
+        run: npm run build:info
+
       - name: Build Angular
         run: npm run build --prefix angular --omit=dev
 
