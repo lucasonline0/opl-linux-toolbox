@@ -23,6 +23,24 @@ a repository checkout. To remove it later, use the distribution package
 manager or download `uninstall.sh`; user settings and library data are not
 deleted.
 
+## Screenshots
+
+### Overview
+
+![OPL Linux Toolbox overview](docs/screenshots/dashboard.png)
+
+### Library
+
+![OPL Linux Toolbox library](docs/screenshots/library.png)
+
+### Import
+
+![OPL Linux Toolbox import](docs/screenshots/import.png)
+
+### Settings
+
+![OPL Linux Toolbox settings](docs/screenshots/settings.png)
+
 ## Features
 
 - Browse PS2 DVD/CD, PS1/POPS and APPS/ELF libraries.
