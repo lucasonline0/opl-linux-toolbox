@@ -7,6 +7,22 @@ managing Open PS2 Loader libraries safely. It works on a local folder, USB
 drive, NAS mount, or any other directory already mounted by the operating
 system. It never formats a device and never requires `sudo`.
 
+## Install
+
+The recommended installation on a supported 64-bit Linux system is:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lucasonline0/opl-linux-toolbox/main/install.sh | bash
+```
+
+The installer downloads the latest stable, checksum-verified GitHub Release
+and selects a native `.deb` (Debian/Ubuntu/Mint), `.rpm` (Fedora/openSUSE),
+`.pacman` (Arch-based systems), or AppImage (other distributions). The
+installed application includes Electron and does not require Node.js, npm, or
+a repository checkout. To remove it later, use the distribution package
+manager or download `uninstall.sh`; user settings and library data are not
+deleted.
+
 ## Features
 
 - Browse PS2 DVD/CD, PS1/POPS and APPS/ELF libraries.

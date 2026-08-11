@@ -1,0 +1,30 @@
+pkgname=opl-linux-toolbox-bin
+pkgver=1.3.0
+pkgrel=1
+pkgdesc='Linux desktop manager for Open PS2 Loader libraries'
+arch=('x86_64')
+url='https://github.com/lucasonline0/opl-linux-toolbox'
+license=('GPL-3.0-only')
+depends=('alsa-lib' 'gtk3' 'libx11' 'libxcb' 'libxcomposite' 'libxdamage' 'libxext' 'libxfixes' 'libxrandr' 'nss' 'pango' 'xdg-utils')
+source=("https://github.com/lucasonline0/opl-linux-toolbox/releases/download/v${pkgver}/opl-linux-toolbox-${pkgver}-x86_64.AppImage")
+sha256sums=('SKIP')
+
+package() {
+  install -Dm755 "${srcdir}/opl-linux-toolbox-${pkgver}-x86_64.AppImage" \
+    "${pkgdir}/opt/opl-linux-toolbox/opl-linux-toolbox.AppImage"
+  install -d "${pkgdir}/usr/bin"
+  ln -s "/opt/opl-linux-toolbox/opl-linux-toolbox.AppImage" \
+    "${pkgdir}/usr/bin/opl-linux-toolbox"
+  install -d "${pkgdir}/usr/share/applications"
+  cat > "${pkgdir}/usr/share/applications/io.github.lucasonline0.opl-linux-toolbox.desktop" <<EOF
+[Desktop Entry]
+Name=OPL Linux Toolbox
+Comment=Manage Open PS2 Loader libraries on Linux
+Exec=opl-linux-toolbox %U
+Icon=opl-linux-toolbox
+Terminal=false
+Type=Application
+Categories=Utility;Game;
+StartupWMClass=opl-linux-toolbox
+EOF
+}
