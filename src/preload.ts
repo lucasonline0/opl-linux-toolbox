@@ -284,12 +284,19 @@ function buildLibraryAPI() {
     removeAllZsoCompressProgressListeners: () => {
       ipcRenderer.removeAllListeners("zso-compress-progress");
     },
+
     // ── Settings & updates ─────────────────────────
     getSettings: () => ipcRenderer.invoke("get-settings"),
     setSetting: (key: string, value: unknown) =>
       ipcRenderer.invoke("set-setting", key, value),
     checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
     installLatestUpdate: () => ipcRenderer.invoke("install-latest-update"),
+    onUpdateProgress: (callback: (progress: { percent: number; stage: string; detail?: string }) => void) => {
+      ipcRenderer.on("update-install-progress", (_event, progress) => callback(progress));
+    },
+    removeAllUpdateProgressListeners: () => {
+      ipcRenderer.removeAllListeners("update-install-progress");
+    },
     openExternal: (url: string) => ipcRenderer.invoke("open-external", url),
 
     // ── Logs ───────────────────────────────────────

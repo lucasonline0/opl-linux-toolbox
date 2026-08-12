@@ -15,20 +15,45 @@ export class VmcComponent implements OnInit {
 
   newName = '';
   newSize = 8;
+  query = '';
   creating = false;
+  refreshing = false;
   error = '';
+  message = '';
 
   constructor(
     public readonly _library: LibraryService,
     public readonly _vmc: VmcService
   ) {}
 
+  get cards() { return this._vmc.cards; }
+  get filteredCards() {
+    const query = this.query.trim().toLowerCase();
+    return query ? this.cards.filter((card) => card.name.toLowerCase().includes(query)) : this.cards;
+  }
+  get totalMb() { return this.cards.reduce((total, card) => total + card.sizeMb, 0); }
+
   ngOnInit() {
-    this._vmc.refresh();
+    void this.refresh();
+  }
+
+  async refresh() {
+    this.refreshing = true;
+    this.error = '';
+    await this._vmc.refresh();
+    this.refreshing = false;
+  }
+
+  usePreset(name: string, sizeMb = 8) {
+    this.newName = name;
+    this.newSize = sizeMb;
+    this.error = '';
+    this.message = '';
   }
 
   async create() {
     this.error = '';
+    this.message = '';
     if (!this.newName.trim()) {
       this.error = 'Enter a name for the card.';
       return;
@@ -37,6 +62,7 @@ export class VmcComponent implements OnInit {
     const res = await this._vmc.create(this.newName, this.newSize);
     this.creating = false;
     if (res.ok) {
+      this.message = `Created ${res.name || this.newName} (${this.newSize} MB). You can assign it to a PS2 game from that game's OPL settings.`;
       this.newName = '';
     } else {
       this.error = res.message || 'Could not create the card.';
@@ -45,7 +71,7 @@ export class VmcComponent implements OnInit {
 
   confirmDelete(name: string) {
     if (window.confirm(`Delete memory card "${name}"? Saved data on it will be lost.`)) {
-      this._vmc.delete(name);
+      void this._vmc.delete(name);
     }
   }
 }

@@ -4,7 +4,7 @@ import { createWriteStream, createReadStream } from "fs";
 import { access, chmod, copyFile, mkdir, readFile, rename, rm } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
-import { Readable } from "stream";
+import { Readable, Transform } from "stream";
 import { pipeline } from "stream/promises";
 import { spawn } from "child_process";
 import { createLogger } from "../logger";
@@ -17,6 +17,8 @@ const ALLOWED_HOSTS = new Set(["github.com", "objects.githubusercontent.com", "r
 
 type PackageKind = "pacman" | "deb" | "rpm" | "appimage";
 interface ReleaseAsset { name: string; browser_download_url: string; }
+export interface UpdateInstallProgress { percent: number; stage: string; detail?: string; }
+type ProgressReporter = (progress: UpdateInstallProgress) => void;
 
 function packageKind(): PackageKind {
   if (process.env.APPIMAGE) return "appimage";
@@ -37,18 +39,38 @@ function safeAsset(asset: ReleaseAsset, ending: string): boolean {
   } catch { return false; }
 }
 
+function reportProgress(report: ProgressReporter | undefined, percent: number, stage: string, detail?: string): void {
+  report?.({ percent: Math.max(0, Math.min(100, Math.round(percent))), stage, detail });
+}
+
 async function sha256(file: string): Promise<string> {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(file)) hash.update(chunk as Buffer);
   return hash.digest("hex");
 }
 
-async function download(url: string, target: string): Promise<void> {
+async function download(url: string, target: string, onProgress?: (percent: number) => void): Promise<void> {
   const response = await fetch(url, { headers: { Accept: "application/octet-stream", "User-Agent": "OPL-Linux-Toolbox" } });
   if (!response.ok || !response.body) throw new Error(`Download failed (HTTP ${response.status})`);
   const finalHost = new URL(response.url).hostname;
   if (!ALLOWED_HOSTS.has(finalHost)) throw new Error("Release download redirected outside GitHub");
-  await pipeline(Readable.fromWeb(response.body as never), createWriteStream(target, { flags: "wx" }));
+
+  const total = Number(response.headers.get("content-length") || 0);
+  let received = 0;
+  const tracker = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      received += chunk.length;
+      if (total > 0) onProgress?.(Math.min(100, (received / total) * 100));
+      callback(null, chunk);
+    },
+  });
+
+  await pipeline(
+    Readable.fromWeb(response.body as never),
+    tracker,
+    createWriteStream(target, { flags: "wx" })
+  );
+  onProgress?.(100);
 }
 
 function runPrivileged(command: string, args: string[]): Promise<void> {
@@ -60,11 +82,18 @@ function runPrivileged(command: string, args: string[]): Promise<void> {
 }
 
 /** Downloads a verified release asset selected solely by the main process, then invokes the native package installer. */
-export async function installLatestLinuxUpdate(): Promise<void> {
+export async function installLatestLinuxUpdate(report?: ProgressReporter): Promise<void> {
   if (process.platform !== "linux") throw new Error("In-app updates are currently available on Linux only");
+
+  reportProgress(report, 3, "Preparing update", "Checking the latest release");
   const status = await checkForUpdates();
-  if (!status.updateAvailable) return;
+  if (!status.updateAvailable) {
+    reportProgress(report, 100, "Already up to date");
+    return;
+  }
+
   const kind = packageKind();
+  reportProgress(report, 7, "Preparing update", `Selecting ${kind === "appimage" ? "AppImage" : kind} package`);
   const releaseResponse = await fetch(RELEASE_API, { headers: { Accept: "application/vnd.github+json", "User-Agent": "OPL-Linux-Toolbox" } });
   if (!releaseResponse.ok) throw new Error(`Could not load the latest release (HTTP ${releaseResponse.status})`);
   const release = await releaseResponse.json() as { assets: ReleaseAsset[] };
@@ -76,14 +105,23 @@ export async function installLatestLinuxUpdate(): Promise<void> {
   await mkdir(workdir, { recursive: true, mode: 0o700 });
   const part = path.join(workdir, `${asset.name}.part`);
   const packageFile = path.join(workdir, asset.name);
+
   try {
+    reportProgress(report, 10, "Downloading update", "Fetching checksum manifest");
     await download(sums.browser_download_url, path.join(workdir, "SHA256SUMS"));
     const sumsText = await readFile(path.join(workdir, "SHA256SUMS"), "utf8");
     const expected = sumsText.split(/\r?\n/).map((line) => line.match(/^([a-f0-9]{64})\s+(.+)$/i)).find((match) => match?.[2] === asset.name)?.[1];
     if (!expected) throw new Error("The release checksum manifest does not contain the selected package");
-    await download(asset.browser_download_url, part);
+
+    await download(asset.browser_download_url, part, (percent) => {
+      reportProgress(report, 15 + percent * 0.6, "Downloading update", asset.name);
+    });
+
+    reportProgress(report, 80, "Verifying update", "Checking SHA-256 integrity");
     if ((await sha256(part)).toLowerCase() !== expected.toLowerCase()) throw new Error("Release checksum verification failed");
     await rename(part, packageFile);
+
+    reportProgress(report, 88, "Installing update", kind === "appimage" ? "Replacing the current AppImage" : "Waiting for package-manager authorization");
     log.info(`Installing verified update ${asset.name} via ${kind}`);
     if (kind === "appimage") {
       const current = process.env.APPIMAGE;
@@ -95,6 +133,10 @@ export async function installLatestLinuxUpdate(): Promise<void> {
     else if (kind === "deb") await runPrivileged("/usr/bin/apt-get", ["install", "-y", packageFile]);
     else if (existsSync("/usr/bin/dnf")) await runPrivileged("/usr/bin/dnf", ["install", "-y", packageFile]);
     else await runPrivileged("/usr/bin/zypper", ["--non-interactive", "install", packageFile]);
+
+    reportProgress(report, 97, "Finalizing update", "Cleaning temporary files");
+    await rm(workdir, { recursive: true, force: true });
+    reportProgress(report, 100, "Restarting", "Update installed successfully");
     app.relaunch();
     app.exit(0);
   } catch (error) {

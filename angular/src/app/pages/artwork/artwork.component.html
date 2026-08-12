@@ -1,19 +1,55 @@
 <div class="artwork-page page fade-in">
-  <header class="artwork-header"><div><span class="page-kicker">Visual collection</span><h1 class="section-title">Artwork</h1><p class="page-subtitle">Discover every available asset and keep each game visually complete.</p></div><div class="artwork-actions"><button class="btn btn-ghost btn-sm" (click)="openFolder()"><i-lucide name="folder-open" size="15"></i-lucide> Open ART</button><button class="btn btn-ghost btn-sm" (click)="checkAll()" [disabled]="checking">@if(checking){<span class="loading loading-spinner loading-xs"></span>}@else{<i-lucide name="refresh-cw" size="15"></i-lucide>} Check source</button><button class="btn btn-primary btn-sm" (click)="fetchMissing()"><i-lucide name="download" size="15"></i-lucide> Find missing</button></div></header>
+  <header class="artwork-header">
+    <div>
+      <span class="page-kicker">Visual collection</span>
+      <h1 class="section-title">Artwork</h1>
+      <p class="page-subtitle">Audit, repair and refresh artwork without replacing healthy files unnecessarily.</p>
+    </div>
+    <div class="artwork-actions">
+      <button class="btn btn-ghost btn-sm" (click)="openFolder()"><i-lucide name="folder-open" size="15"></i-lucide> Open ART</button>
+      <button class="btn btn-ghost btn-sm" (click)="attentionOnly = !attentionOnly" [class.btn-active]="attentionOnly"><i-lucide name="filter" size="15"></i-lucide> {{ attentionOnly ? 'Showing attention' : 'All games' }}</button>
+      <button class="btn btn-ghost btn-sm" (click)="checkAll()" [disabled]="checking">@if(checking){<span class="loading loading-spinner loading-xs"></span>}@else{<i-lucide name="refresh-cw" size="15"></i-lucide>} Check source</button>
+      <button class="btn btn-primary btn-sm" (click)="fetchMissing()"><i-lucide name="download" size="15"></i-lucide> Repair missing</button>
+    </div>
+  </header>
+
   <div class="artwork-scroll">
-    <section class="artwork-summary glass-medium"><div class="summary-icon"><i-lucide name="sparkles" size="22"></i-lucide></div><div><span class="card-eyebrow">Artwork health</span><h2>{{ localCount }} local assets across {{ rows.length }} games</h2><p>Remote inventories are checked per game, so unavailable assets never count as errors.</p></div><div class="summary-stats"><div><strong>{{ checkedCount }}</strong><span>checked</span></div><div><strong>{{ needsRepairCount }}</strong><span>need attention</span></div></div></section>
+    <section class="artwork-summary glass-medium">
+      <div class="summary-icon"><i-lucide name="sparkles" size="22"></i-lucide></div>
+      <div>
+        <span class="card-eyebrow">Artwork health</span>
+        <h2>{{ completeCount }} complete · {{ localCount }} local assets</h2>
+        <p>{{ checkedCount }} of {{ rows.length }} games checked against the remote artwork source.</p>
+        @if(lastMessage){<small>{{ lastMessage }}</small>}
+      </div>
+      <div class="summary-stats">
+        <div><strong>{{ missingAssetCount }}</strong><span>missing assets</span></div>
+        <div><strong>{{ needsRepairCount }}</strong><span>need attention</span></div>
+      </div>
+    </section>
+
     <section class="art-grid">
-      @for(row of rows;track row.game.path){
+      @for(row of visibleRows;track row.game.path){
         <article class="art-card glass-medium">
           <div class="art-cover">
             @if(cover(row);as art){<img [src]="artUrl(art)" alt=""/>}@else{<div class="cover-missing"><i-lucide name="image-off" size="25"></i-lucide></div>}
             <span class="state-pill" [class.warning]="row.state==='Available'" [class.error]="row.state==='Error'">{{ stateLabel(row) }}</span>
           </div>
-          <div class="art-info"><h3>{{row.game.title||row.game.gameId}}</h3><p>{{row.game.gameId}}</p><div class="asset-count"><span>{{row.game.art?.length||0}} local</span><i-lucide name="circle" size="4"></i-lucide><span>{{row.remote?.length??'—'}} remote</span></div><div class="asset-tags">@for(asset of visibleAssets(row);track asset.fileName){<span [class.missing]="missing(row).includes(asset)">{{asset.type}}</span>}@if((row.remote?.length||0)>5){<span>+{{(row.remote?.length||0)-5}}</span>}</div></div>
-          <div class="art-card-actions"><button title="Import artwork manually" (click)="manual(row)"><i-lucide name="upload" size="15"></i-lucide></button><button title="Check remote source" (click)="check(row)"><i-lucide name="refresh-cw" size="15"></i-lucide></button><button class="repair-button" [disabled]="row.state==='Missing source'" (click)="fetch(row,true)">{{ missing(row).length ? 'Repair' : 'Refresh' }}</button></div>
+          <div class="art-info">
+            <h3>{{row.game.title||row.game.gameId}}</h3>
+            <p>{{row.game.gameId}}</p>
+            <div class="asset-count"><span>{{row.game.art?.length||0}} local</span><i-lucide name="circle" size="4"></i-lucide><span>{{row.remote?.length??'—'}} remote</span></div>
+            <div class="asset-tags">@for(asset of visibleAssets(row);track asset.fileName){<span [class.missing]="missing(row).includes(asset)">{{asset.type}}</span>}@if((row.remote?.length||0)>5){<span>+{{(row.remote?.length||0)-5}}</span>}</div>
+            @if(row.error){<small class="text-error">{{ row.error }}</small>}
+          </div>
+          <div class="art-card-actions">
+            <button title="Import artwork manually" (click)="manual(row)"><i-lucide name="upload" size="15"></i-lucide></button>
+            <button title="Check remote source" (click)="check(row)"><i-lucide name="refresh-cw" size="15"></i-lucide></button>
+            <button class="repair-button" [disabled]="row.state==='Missing source'" (click)="fetch(row, missing(row).length === 0)">{{ missing(row).length ? 'Repair missing' : 'Refresh all' }}</button>
+          </div>
         </article>
       } @empty {
-        <div class="art-empty"><span><i-lucide name="images" size="30"></i-lucide></span><h2>No artwork library yet</h2><p>Connect an OPL library with games to discover and manage artwork.</p></div>
+        <div class="art-empty"><span><i-lucide name="images" size="30"></i-lucide></span><h2>{{ attentionOnly ? 'No artwork needs attention' : 'No artwork library yet' }}</h2><p>{{ attentionOnly ? 'Everything currently checked is healthy.' : 'Connect an OPL library with games to discover and manage artwork.' }}</p></div>
       }
     </section>
   </div>

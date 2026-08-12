@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - 'agent/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Electron dependencies
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            npm ci && break
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            rm -rf node_modules
+            sleep 3
+          done
+
+      - name: Install Angular dependencies
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            npm ci --prefix angular && break
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            rm -rf angular/node_modules
+            sleep 3
+          done
+
+      - name: Generate build metadata
+        run: npm run build:info
+
+      - name: Build Angular
+        run: npm run build --prefix angular --omit=dev
+
+      - name: Run core tests and build Electron
+        run: npm run test:core

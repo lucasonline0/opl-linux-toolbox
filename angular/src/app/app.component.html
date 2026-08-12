@@ -6,15 +6,51 @@
       @if ((_updateService.result$ | async); as update) {
         <div class="update-overlay" role="dialog" aria-modal="true" aria-label="Application update available">
           <section class="update-dialog">
-            <span class="update-icon"><i-lucide name="download" size="20"></i-lucide></span>
+            <span class="update-icon">
+              @if (_updateService.installing$ | async) {
+                <span class="loading loading-spinner loading-sm"></span>
+              } @else {
+                <i-lucide name="download" size="20"></i-lucide>
+              }
+            </span>
             <div>
-              <p class="page-kicker">Update available</p>
+              <p class="page-kicker">{{ (_updateService.installing$ | async) ? 'Updating safely' : 'Update available' }}</p>
               <h2>OPL Linux Toolbox {{ update.latestVersion }}</h2>
-              <p>A newer version is ready. The package checksum is verified before the native installer runs.</p>
+              @if (_updateService.installing$ | async) {
+                <p>{{ (_updateService.stage$ | async) || 'Preparing update' }}</p>
+                @if (_updateService.detail$ | async; as detail) {
+                  <p class="update-detail">{{ detail }}</p>
+                }
+              } @else {
+                <p>A newer version is ready. The package checksum is verified before the native installer runs.</p>
+              }
             </div>
+
+            @if (_updateService.installing$ | async) {
+              <div class="update-progress-block" aria-live="polite">
+                <div class="update-progress-label">
+                  <span>{{ (_updateService.stage$ | async) || 'Updating' }}</span>
+                  <strong>{{ (_updateService.progress$ | async) || 0 }}%</strong>
+                </div>
+                <div class="update-progress-track" role="progressbar" [attr.aria-valuenow]="(_updateService.progress$ | async) || 0" aria-valuemin="0" aria-valuemax="100">
+                  <span [style.width.%]="(_updateService.progress$ | async) || 0"></span>
+                </div>
+                <small>Keep the app open. It will restart automatically when the update is complete.</small>
+              </div>
+            }
+
+            @if (_updateService.installError$ | async; as installError) {
+              <div class="update-error"><i-lucide name="triangle-alert" size="15"></i-lucide><span>{{ installError }}</span></div>
+            }
+
             <div class="update-actions">
-              <button class="btn btn-ghost btn-sm" (click)="_updateService.dismiss()">Not now</button>
-              <button class="btn btn-primary btn-sm" (click)="_updateService.installLatest()"><i-lucide name="download" size="15"></i-lucide> Install update</button>
+              @if (!(_updateService.installing$ | async)) {
+                <button class="btn btn-ghost btn-sm" (click)="_updateService.dismiss()">Not now</button>
+                @if (_updateService.installError$ | async) {
+                  <button class="btn btn-ghost btn-sm" (click)="_updateService.openRelease()"><i-lucide name="external-link" size="15"></i-lucide> Release page</button>
+                }
+                <button class="btn btn-primary btn-sm" (click)="_updateService.installLatest()"><i-lucide name="download" size="15"></i-lucide> {{ (_updateService.installError$ | async) ? 'Retry update' : 'Install update' }}</button>
+              }
             </div>
           </section>
         </div>
@@ -29,16 +65,18 @@
         </div>
 
         <nav [class.pointer-events-none]="this._libraryService.loading$ | async">
-          <p class="nav-label">Workspace</p>
+          <p class="nav-label">Library</p>
           <a routerLink="/dashboard" routerLinkActive="active" class="nav-item"><i-lucide name="layout-dashboard" size="18"></i-lucide><span>Overview</span></a>
-          <a routerLink="/library" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="library" size="18"></i-lucide><span>Library</span></a>
+          <a routerLink="/library" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="library" size="18"></i-lucide><span>Games</span></a>
           <a routerLink="/import" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="disc-3" size="18"></i-lucide><span>Import</span></a>
-          <a routerLink="/artwork" routerLinkActive="active" class="nav-item"><i-lucide name="images" size="18"></i-lucide><span>Artwork</span></a>
 
-          <p class="nav-label nav-label-spaced">Manage</p>
+          <p class="nav-label nav-label-spaced">Assets</p>
+          <a routerLink="/artwork" routerLinkActive="active" class="nav-item"><i-lucide name="images" size="18"></i-lucide><span>Artwork</span></a>
           <a routerLink="/memory-cards" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="hard-drive" size="18"></i-lucide><span>Memory cards</span></a>
+
+          <p class="nav-label nav-label-spaced">Tools</p>
+          <a routerLink="/maintenance" routerLinkActive="active" class="nav-item"><i-lucide name="shield-check" size="18"></i-lucide><span>Health & repair</span></a>
           <a routerLink="/invalid-files" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="triangle-alert" size="18"></i-lucide><span>Invalid files</span>@if((this._libraryService.totalInvalidFiles$ | async)){<span class="nav-count">{{ this._libraryService.totalInvalidFiles$ | async }}</span>}</a>
-          <a routerLink="/maintenance" routerLinkActive="active" class="nav-item"><i-lucide name="shield-check" size="18"></i-lucide><span>Maintenance</span></a>
           <a routerLink="/logs" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="terminal" size="18"></i-lucide><span>Logs</span></a>
           <a routerLink="/settings" routerLinkActive="active" class="nav-item" [class.disabled]="this._libraryService.loading$ | async"><i-lucide name="settings" size="18"></i-lucide><span>Settings</span></a>
         </nav>
