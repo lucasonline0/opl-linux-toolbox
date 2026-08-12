@@ -1,7 +1,7 @@
 {
   "name": "opl-linux-toolbox",
   "version": "1.4.0",
-  "description": "Linux-first safe manager for Open PS2 Loader libraries.",
+  "description": "Linux-first desktop manager for Open PS2 Loader libraries.",
   "main": "dist/src/main.js",
   "author": "lucasonline0",
   "email": "",
