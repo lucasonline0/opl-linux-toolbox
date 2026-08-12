@@ -38,7 +38,11 @@ export function registerSettingsIpc(): void {
     return checkForUpdates();
   });
 
-  ipcMain.handle("install-latest-update", async () => {
-    await installLatestLinuxUpdate();
+  ipcMain.handle("install-latest-update", async (event) => {
+    await installLatestLinuxUpdate((progress) => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.send("update-install-progress", progress);
+      }
+    });
   });
 }
