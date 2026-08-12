@@ -1,0 +1,75 @@
+name: Bug report
+description: Report a reproducible problem in OPL Linux Toolbox
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve OPL Linux Toolbox. Please avoid including copyrighted game files or private information.
+  - type: input
+    id: version
+    attributes:
+      label: OPL Linux Toolbox version
+      placeholder: v1.3.9
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Linux distribution
+      placeholder: Arch Linux, Ubuntu 26.04, Fedora, etc.
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package format
+      options:
+        - AppImage
+        - DEB
+        - RPM
+        - Pacman / Arch package
+        - Development checkout
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: What happened and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Mount/select library...
+        2. Open...
+        3. Click...
+        4. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: storage
+    attributes:
+      label: Storage / OPL setup
+      description: If relevant, include filesystem (FAT32/exFAT/ext4/etc.), USB/MX4SIO/SMB/local folder and approximate free space. Do not include game images.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste only the relevant log excerpt and remove personal paths or sensitive data if necessary.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked that this is not already reported in an open issue.
+          required: true
+        - label: I am not attaching copyrighted game images or private data.
+          required: true
