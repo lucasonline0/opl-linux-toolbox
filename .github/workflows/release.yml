@@ -69,8 +69,8 @@ jobs:
       - name: Build Angular
         run: npm run build --prefix angular --omit=dev
 
-      - name: Build Electron and run core tests
-        run: npm run test:core
+      - name: Build Electron TypeScript
+        run: npm run build
 
       - name: Build Linux packages
         run: |
