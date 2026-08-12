@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3; do
-            npm ci && break
+            ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci && break
             if [ "$attempt" -eq 3 ]; then exit 1; fi
             rm -rf node_modules
             sleep 3
@@ -74,9 +74,15 @@ jobs:
 
       - name: Build Linux packages
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y rpm libarchive-tools
-          npx electron-builder --linux --publish never
+          for attempt in 1 2 3; do
+            rm -rf build
+            npx electron-builder --linux --publish never && break
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 5
+          done
 
       - name: Generate SHA256SUMS
         run: |
