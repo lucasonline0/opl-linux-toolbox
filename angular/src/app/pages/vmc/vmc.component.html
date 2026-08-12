@@ -3,88 +3,76 @@
     <i-lucide name="hard-drive" size="26" class="text-accent"></i-lucide>
     <div>
       <h1 class="section-title text-2xl">Memory Cards</h1>
-      <p class="text-xs text-base-content/45">Virtual PS2 memory cards (VMC)</p>
+      <p class="text-xs text-base-content/45">Create, organize and assign virtual PS2 memory cards.</p>
     </div>
+    @if (_library.hasCurrentDirectory$ | async) {
+      <button class="btn btn-ghost btn-sm ml-auto" (click)="refresh()" [disabled]="refreshing">
+        @if (refreshing) {<span class="loading loading-spinner loading-xs"></span>} @else {<i-lucide name="refresh-cw" size="15"></i-lucide>}
+        Refresh
+      </button>
+    }
   </header>
 
   @if (_library.hasCurrentDirectory$ | async) {
   <div class="flex-1 overflow-y-auto px-6 py-6">
-    <div class="mx-auto flex max-w-3xl flex-col gap-5">
-      <!-- Create -->
+    <div class="mx-auto flex max-w-4xl flex-col gap-5">
+      <section class="grid grid-cols-3 gap-3">
+        <article class="glass rounded-box p-4"><span class="text-xs text-base-content/45">Cards</span><strong class="mt-1 block text-2xl">{{ cards.length }}</strong></article>
+        <article class="glass rounded-box p-4"><span class="text-xs text-base-content/45">Allocated</span><strong class="mt-1 block text-2xl">{{ totalMb }} MB</strong></article>
+        <article class="glass rounded-box p-4"><span class="text-xs text-base-content/45">Standard size</span><strong class="mt-1 block text-2xl">8 MB</strong></article>
+      </section>
+
       <section class="glass rounded-box p-5">
-        <h2 class="mb-3 font-display text-sm font-semibold tracking-wide">
-          Create a card
-        </h2>
+        <div class="mb-4 flex items-start justify-between gap-4">
+          <div><h2 class="font-display text-sm font-semibold tracking-wide">Create a card</h2><p class="mt-1 text-xs text-base-content/45">Names are automatically normalized to OPL-safe filenames.</p></div>
+          <div class="flex gap-1">
+            <button class="btn btn-ghost btn-xs" (click)="usePreset('shared', 8)">Shared 8 MB</button>
+            <button class="btn btn-ghost btn-xs" (click)="usePreset('slot_1', 8)">Slot 1</button>
+            <button class="btn btn-ghost btn-xs" (click)="usePreset('slot_2', 8)">Slot 2</button>
+          </div>
+        </div>
         <div class="flex flex-wrap items-end gap-3">
           <fieldset class="fieldset min-w-52 flex-1">
             <legend class="fieldset-legend">Name</legend>
-            <input
-              type="text"
-              class="input w-full"
-              placeholder="shared_card"
-              [value]="newName"
-              (input)="newName = $any($event.target).value"
-            />
+            <input type="text" class="input w-full" placeholder="shared_card" maxlength="32" [value]="newName" (input)="newName = $any($event.target).value" />
           </fieldset>
           <fieldset class="fieldset">
             <legend class="fieldset-legend">Size</legend>
-            <select
-              class="select"
-              [value]="newSize"
-              (change)="newSize = +$any($event.target).value"
-            >
-              @for (s of sizes; track s) {
-              <option [value]="s">{{ s }} MB</option>
-              }
+            <select class="select" [value]="newSize" (change)="newSize = +$any($event.target).value">
+              @for (s of sizes; track s) {<option [value]="s">{{ s }} MB</option>}
             </select>
           </fieldset>
           <button class="btn btn-primary" (click)="create()" [disabled]="creating">
-            @if (creating) {
-            <span class="loading loading-spinner loading-sm"></span>
-            } @else {
-            <i-lucide name="plus" size="18"></i-lucide>
-            }
+            @if (creating) {<span class="loading loading-spinner loading-sm"></span>} @else {<i-lucide name="plus" size="18"></i-lucide>}
             Create
           </button>
         </div>
-        @if (error) {
-        <p class="mt-2 text-sm text-error">{{ error }}</p>
-        }
-        <p class="mt-2 flex items-center gap-2 text-xs text-base-content/45">
-          <i-lucide name="info" size="13"></i-lucide>
-          New cards are blank — OPL formats them automatically on first use.
-        </p>
+        @if (error) {<p class="mt-3 text-sm text-error">{{ error }}</p>}
+        @if (message) {<p class="mt-3 text-sm text-success">{{ message }}</p>}
+        <p class="mt-3 flex items-center gap-2 text-xs text-base-content/45"><i-lucide name="info" size="13"></i-lucide>New cards are blank. OPL formats them on first use; assignment is stored in each game's CFG.</p>
       </section>
 
-      <!-- List -->
       <section class="glass rounded-box p-5">
-        <h2 class="mb-3 font-display text-sm font-semibold tracking-wide">
-          Existing cards
-        </h2>
-        @if ((_vmc.cards$ | async); as cards) {
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+          <div><h2 class="font-display text-sm font-semibold tracking-wide">Existing cards</h2><p class="mt-1 text-xs text-base-content/45">Use the game details page to assign a card to VMC slot 0 or 1.</p></div>
+          <label class="input input-sm ml-auto flex min-w-56 items-center gap-2"><i-lucide name="search" size="14"></i-lucide><input class="grow" type="search" placeholder="Filter cards" [value]="query" (input)="query = $any($event.target).value" /></label>
+        </div>
+
         @if (cards.length === 0) {
-        <div class="flex flex-col items-center gap-2 py-8 text-center text-base-content/40">
-          <i-lucide name="hard-drive" size="28"></i-lucide>
-          <p class="text-sm">No memory cards yet.</p>
-        </div>
+          <div class="flex flex-col items-center gap-2 py-8 text-center text-base-content/40"><i-lucide name="hard-drive" size="28"></i-lucide><p class="text-sm">No memory cards yet.</p></div>
+        } @else if (filteredCards.length === 0) {
+          <div class="flex flex-col items-center gap-2 py-8 text-center text-base-content/40"><i-lucide name="search-x" size="28"></i-lucide><p class="text-sm">No cards match “{{ query }}”.</p></div>
         } @else {
-        <div class="flex flex-col gap-2">
-          @for (card of cards; track card.name) {
-          <div class="flex items-center gap-3 rounded-md border border-base-content/10 bg-base-100/40 p-3">
-            <i-lucide name="hard-drive" size="18" class="text-accent"></i-lucide>
-            <span class="font-mono text-sm">{{ card.name }}</span>
-            <span class="badge badge-ghost badge-sm ml-2">{{ card.sizeMb }} MB</span>
-            <button
-              class="btn btn-ghost btn-xs btn-square ml-auto text-error"
-              (click)="confirmDelete(card.name)"
-              title="Delete"
-            >
-              <i-lucide name="trash-2" size="15"></i-lucide>
-            </button>
+          <div class="flex flex-col gap-2">
+            @for (card of filteredCards; track card.name) {
+              <div class="flex items-center gap-3 rounded-md border border-base-content/10 bg-base-100/40 p-3">
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-accent"><i-lucide name="hard-drive" size="17"></i-lucide></span>
+                <div><span class="block font-mono text-sm">{{ card.name }}</span><small class="text-xs text-base-content/40">VMC/{{ card.name }}.bin</small></div>
+                <span class="badge badge-ghost badge-sm ml-auto">{{ card.sizeMb }} MB</span>
+                <button class="btn btn-ghost btn-xs btn-square text-error" (click)="confirmDelete(card.name)" title="Delete"><i-lucide name="trash-2" size="15"></i-lucide></button>
+              </div>
+            }
           </div>
-          }
-        </div>
-        }
         }
       </section>
     </div>
@@ -94,9 +82,7 @@
     <div class="empty-state">
       <div class="empty-orb"><i-lucide name="folder-open" size="44"></i-lucide></div>
       <h2 class="font-display mt-5 text-xl tracking-wide">No directory mounted</h2>
-      <p class="mt-1 max-w-sm text-sm text-base-content/50">
-        Mount a library directory to manage memory cards.
-      </p>
+      <p class="mt-1 max-w-sm text-sm text-base-content/50">Mount a library directory to manage memory cards.</p>
     </div>
   </div>
   }
