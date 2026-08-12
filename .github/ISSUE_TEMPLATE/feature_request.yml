@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest an improvement to OPL Linux Toolbox
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the OPL workflow or limitation this feature would improve.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Explain the expected user-facing behavior rather than only the implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Library
+        - Import / transfer safety
+        - Artwork
+        - CFG
+        - VMC
+        - Storage / devices
+        - Packaging / distribution
+        - UI / UX
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include relevant OPL setup details, screenshots or references if useful. Do not attach copyrighted game images.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for a similar request.
+          required: true
+        - label: This request is about library management/homebrew tooling and does not request commercial game-download functionality.
+          required: true
