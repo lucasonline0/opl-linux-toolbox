@@ -4,9 +4,17 @@
       <div>
         <span class="page-kicker">Your PlayStation library</span>
         <h1 class="section-title">Library overview</h1>
-        <p class="page-subtitle">Games, artwork and storage — all in one calm workspace.</p>
+        <p class="page-subtitle">Games, artwork, storage and health — all in one workspace.</p>
       </div>
-      <div class="dashboard-heading-actions">@if (library.hasCurrentDirectory$ | async) {<a routerLink="/import" class="btn btn-primary btn-sm"><i-lucide name="plus" size="16"></i-lucide> Import games</a>}</div>
+      <div class="dashboard-heading-actions">
+        @if (library.hasCurrentDirectory$ | async) {
+          <button class="btn btn-ghost btn-sm" (click)="refreshOverview()" [disabled]="refreshing">
+            @if(refreshing){<span class="loading loading-spinner loading-xs"></span>}@else{<i-lucide name="refresh-cw" size="15"></i-lucide>}
+            Refresh
+          </button>
+          <a routerLink="/import" class="btn btn-primary btn-sm"><i-lucide name="plus" size="16"></i-lucide> Import games</a>
+        }
+      </div>
     </header>
 
     @if (library.storage$ | async; as storage) {
@@ -59,14 +67,32 @@
             <div class="card-heading"><div><span class="card-eyebrow">Artwork</span><h3>Visual library</h3></div><div class="cover-stack">@for(game of gamesWithCovers.slice(0,3); track game.path){@if(coverFor(game);as cover){<img [src]="artDataUrl(cover)" alt=""/>}}</div></div>
             <div class="health-number"><strong>{{ gamesWithArtwork }}</strong><span>/ {{ artworkEligible }} games with assets</span></div>
             <div class="soft-progress"><span [style.width.%]="artworkPercent"></span></div>
-            <div class="health-foot"><span>{{ withoutCover }} without cover</span><a routerLink="/artwork">Find artwork</a></div>
+            <div class="health-foot"><span>{{ withoutCover }} without cover</span><a routerLink="/artwork">Repair artwork</a></div>
           </article>
           <article class="maintenance-card glass-medium" [class.has-issues]="issues > 0">
             <span class="health-icon"><i-lucide [name]="issues ? 'shield-alert' : 'shield-check'" size="19"></i-lucide></span>
-            <div><span class="card-eyebrow">Library health</span><h3>{{ issues ? issues + (issues === 1 ? ' issue found' : ' issues found') : 'Everything looks good' }}</h3><small>{{ issues ? 'Review before making repairs.' : 'No incomplete installs detected.' }}</small></div>
+            <div><span class="card-eyebrow">Library health</span><h3>{{ issues ? issues + (issues === 1 ? ' issue found' : ' issues found') : 'Everything looks good' }}</h3><small>{{ issues ? 'Review before making repairs.' : 'No incomplete installs detected.' }} @if(lastScanAt){· scanned {{ lastScanAt }}}</small></div>
             <a routerLink="/maintenance" class="icon-link"><i-lucide name="arrow-up-right" size="15"></i-lucide></a>
           </article>
         </div>
+      </section>
+
+      <section class="grid grid-cols-3 gap-3">
+        <a routerLink="/maintenance" class="glass-medium rounded-box flex items-center gap-3 p-4 transition hover:-translate-y-0.5">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-accent"><i-lucide name="shield-check" size="19"></i-lucide></span>
+          <div><span class="card-eyebrow">Health & repair</span><h3 class="mt-1 text-sm font-semibold">{{ issues }} maintenance {{ issues === 1 ? 'finding' : 'findings' }}</h3></div>
+          <i-lucide name="chevron-right" size="15" class="ml-auto text-base-content/30"></i-lucide>
+        </a>
+        <a routerLink="/artwork" class="glass-medium rounded-box flex items-center gap-3 p-4 transition hover:-translate-y-0.5">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-accent"><i-lucide name="images" size="19"></i-lucide></span>
+          <div><span class="card-eyebrow">Artwork</span><h3 class="mt-1 text-sm font-semibold">{{ withoutCover }} {{ withoutCover === 1 ? 'game' : 'games' }} without cover</h3></div>
+          <i-lucide name="chevron-right" size="15" class="ml-auto text-base-content/30"></i-lucide>
+        </a>
+        <a routerLink="/memory-cards" class="glass-medium rounded-box flex items-center gap-3 p-4 transition hover:-translate-y-0.5">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-accent"><i-lucide name="hard-drive" size="19"></i-lucide></span>
+          <div><span class="card-eyebrow">OPL tools</span><h3 class="mt-1 text-sm font-semibold">Manage VMC assignments</h3></div>
+          <i-lucide name="chevron-right" size="15" class="ml-auto text-base-content/30"></i-lucide>
+        </a>
       </section>
 
       <section class="queue-card glass-medium">
