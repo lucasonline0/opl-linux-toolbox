@@ -2,30 +2,20 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { LibraryService } from '@shared/services/library.service';
-import { CfgService, CFG_KEY_NAME } from '@shared/services/cfg.service';
+import {
+  CfgService,
+  CFG_KEY_NAME,
+  CFG_KEY_COMPAT,
+  CFG_KEY_VMC0,
+  CFG_KEY_VMC1,
+  COMPAT_MODES,
+  GameCfg,
+} from '@shared/services/cfg.service';
 import { TitleCfgService } from '@shared/services/title-cfg.service';
+import { VmcService } from '@shared/services/vmc.service';
 import { Game, gameArt } from '@shared/types/game.type';
 
-/**
- * Details view for a single game or app.
- *
- * Displays cover art, metadata (title, developer, genre, release, score,
- * parental rating, players), description, screenshots, and file info.
- *
- * Supports two layout variants: **default** (stacked) and **alt** (card-style
- * with a 2-column meta grid), toggled via the header button group.
- *
- * Metadata sources:
- * - **PS2 / PS1 disc games** → `CFG/<gameId>.cfg`
- * - **PS1 POPStarter (APPS)** → `APPS/<folder>/title.cfg`
- * - **ELF homebrew (APPS)** → `title.cfg` (some fields hidden)
- *
- * ── Change detection ──────────────────────────────────────────────
- * Uses `ChangeDetectionStrategy.Default` and calls
- * `ChangeDetectorRef.detectChanges()` after every async state assignment
- * because zone.js cannot reliably track Promise microtasks across
- * Electron's `contextBridge` boundary.
- */
+/** Details view for a single game or app. */
 @Component({
   selector: 'app-details',
   imports: [LucideAngularModule],
@@ -33,50 +23,39 @@ import { Game, gameArt } from '@shared/types/game.type';
   styleUrl: './details.component.scss',
 })
 export class DetailsComponent {
-  // ── Injected services ─────────────────────────────────────────
   private _router = inject(Router);
   private _library = inject(LibraryService);
   private _cfg = inject(CfgService);
   private _titleCfg = inject(TitleCfgService);
+  private _vmc = inject(VmcService);
   private _cdr = inject(ChangeDetectorRef);
 
-  // ── Component state ───────────────────────────────────────────
-
-  /** The currently selected game (set in `ngOnInit`). */
   game: Game | null = null;
-  /** Base64 data URL for the background art, or `null`. */
   bgArt: string | null = null;
-  /** Base64 data URL for the cover art, or `null`. */
   covArt: string | null = null;
-  /** Ordered screenshots (SCR first, SCR2 second). */
   screenshots: gameArt[] = [];
-  /** Every additional remote asset, including numbered and unknown types. */
   assetGallery: gameArt[] = [];
-  /** Whether metadata is still being loaded. */
   loading = true;
 
-  /** Game display title (from CFG/title.cfg, falls back to game.title / gameId / filename). */
   displayTitle = '';
-  /** Developer string, hidden for ELF apps. */
   developer = '';
-  /** Genre string, hidden for ELF apps. */
   genre = '';
-  /** Release year string, hidden for ELF apps. */
   release = '';
-  /** Game description / synopsis. */
   description = '';
-  /** Numeric score (0–5) used for the star icons. */
   ratingValue = 0;
-  /** Parental rating system type extracted from `Parental=<type>/<value>` (e.g. `"esrb"`). */
   parentalType = '';
-  /** Parental rating display value extracted from `ParentalText` (e.g. `"T"`). */
   parentalDisplayValue = '';
-  /** Raw players string (e.g. `"1-4"`, `"2"`). */
   players = '';
-  /** Active layout variant, toggled via the header button group. */
   layoutVariant: 'default' | 'alt' = 'default';
 
-  // ── Lifecycle ─────────────────────────────────────────────────
+  readonly compatModes = COMPAT_MODES;
+  cfgEntries: GameCfg = {};
+  compatValue = 0;
+  vmc0 = '';
+  vmc1 = '';
+  cfgSaving = false;
+  cfgMessage = '';
+  cfgError = '';
 
   ngOnInit() {
     this.game = this._library.selectedGameValue;
@@ -87,7 +66,6 @@ export class DetailsComponent {
       return;
     }
 
-    // ── Artwork — sync, safe outside zone ─────────────────────────
     if (Array.isArray(this.game.art)) {
       const background = this.game.art.find((a) => /^BG(?:_|$)/i.test(a.type || ''));
       this.bgArt = background ? this.artDataUrl(background) : null;
@@ -96,7 +74,6 @@ export class DetailsComponent {
       this.assetGallery = this.game.art.filter((a) => a.type?.toUpperCase() !== 'COV').sort((a,b)=>a.type.localeCompare(b.type));
     }
 
-    // ── Async metadata — fire-and-forget via .then() + detectChanges() ──
     const root = this._library.currentDirectoryValue;
     if (root) {
       this._loadMetadata(root);
@@ -106,21 +83,6 @@ export class DetailsComponent {
     }
   }
 
-  // ── Private helpers ───────────────────────────────────────────────
-
-  /**
-   * Kick off async metadata loading for the current game.
-   *
-   * Dispatches to one of three paths depending on the game type:
-   * 1. **Disc games** (PS2 / PS1) → `CFG/<gameId>.cfg`
-   * 2. **PS1 POPStarter** → `title.cfg`
-   * 3. **ELF homebrew** → `title.cfg` (with field restrictions)
-   *
-   * Every `.then()` callback assigns state directly and calls
-   * `ChangeDetectorRef.detectChanges()` to force Angular change detection,
-   * bypassing zone.js microtask tracking (which Electron's
-   * `contextBridge` cannot reliably trigger).
-   */
   private _loadMetadata(root: string): void {
     const game = this.game!;
     const isPs1LauncherApp = game.system === 'APPS' && !!game.isPs1Launcher;
@@ -129,6 +91,7 @@ export class DetailsComponent {
 
     if (isDiscGame && game.gameId) {
       this._cfg.getGameCfg(game.gameId).then((cfg) => {
+        this.cfgEntries = { ...cfg };
         this.displayTitle = cfg[CFG_KEY_NAME] || '';
         this.developer = cfg['Developer'] || '';
         this.genre = cfg['Genre'] || '';
@@ -137,6 +100,11 @@ export class DetailsComponent {
         this.ratingValue = this.parseRating(cfg['RatingText'] || cfg['Rating'] || '');
         this._formatParentalLabel(cfg['Parental'] || '', cfg['ParentalText'] || '');
         this.players = cfg['PlayersText'] || cfg['Players'] || '';
+        const parsedCompatibility = Number.parseInt(cfg[CFG_KEY_COMPAT] || '0', 0);
+        this.compatValue = Number.isFinite(parsedCompatibility) ? parsedCompatibility : 0;
+        this.vmc0 = cfg[CFG_KEY_VMC0] || '';
+        this.vmc1 = cfg[CFG_KEY_VMC1] || '';
+        void this._vmc.refresh();
         this._applyFallbackTitle();
         this.loading = false;
         this._cdr.detectChanges();
@@ -148,12 +116,7 @@ export class DetailsComponent {
       return;
     }
 
-    if (isPs1LauncherApp && game.appFolder) {
-      this._loadTitleCfg(game.appFolder);
-      return;
-    }
-
-    if (isElfApp && game.appFolder) {
+    if ((isPs1LauncherApp || isElfApp) && game.appFolder) {
       this._loadTitleCfg(game.appFolder);
       return;
     }
@@ -163,10 +126,6 @@ export class DetailsComponent {
     this._cdr.detectChanges();
   }
 
-  /**
-   * Load metadata from `title.cfg` (POPStarter or ELF apps).
-   * Uses the `TitleCfgService` to read and parse the INI-style file.
-   */
   private _loadTitleCfg(folder: string): void {
     this._titleCfg.getTitleCfg(folder).then((data) => {
       if (data.title) this.displayTitle = data.title;
@@ -187,25 +146,12 @@ export class DetailsComponent {
     });
   }
 
-  /**
-   * Ensure `displayTitle` has a value.  If no title was loaded from
-   * CFG / title.cfg, falls back to `game.title` → `game.gameId` → `game.filename`.
-   */
   private _applyFallbackTitle(): void {
     if (!this.displayTitle && this.game) {
       this.displayTitle = this.game.title || this.game.gameId || this.game.filename;
     }
   }
 
-  /**
-   * Parse the `Parental` and `ParentalText` CFG values into separate
-   * component properties consumed by the `parentalLabel` getter.
-   *
-   * Examples:
-   * - `Parental="esrb/teen"`, `ParentalText="T"` → type=`"esrb"`, value=`"T"`
-   * - `Parental="pegi/12"` (no ParentalText) → type=`"pegi"`, value=`"12"`
-   * - `ParentalText="T"` alone → type=`""`, value=`"T"`
-   */
   private _formatParentalLabel(parental: string, text: string): void {
     if (parental.includes('/')) {
       this.parentalType = parental.split('/')[0].trim();
@@ -216,49 +162,85 @@ export class DetailsComponent {
     }
   }
 
-  // ── Template helpers ──────────────────────────────────────────────
-
-  /**
-   * Formatted parental rating string for display.
-   *
-   * Returns `""` when no rating is available.
-   * Examples: `"ESRB - T"`, `"PEGI - 12"`, `"CERO - A"`, or just `"T"` if the
-   * parental type is unknown.
-   */
   get parentalLabel(): string {
     if (!this.parentalType && !this.parentalDisplayValue) return '';
     if (!this.parentalType) return this.parentalDisplayValue;
     return `${this.parentalType.toUpperCase()} - ${this.parentalDisplayValue}`;
   }
 
-  /** Whether the cover should render in a 1:1 square aspect ratio. */
   get isSquareCover(): boolean {
     if (!this.game) return false;
     return this.game.system === 'PS1' || this.game.system === 'APPS';
   }
 
-  /** `true` when the current game is an ELF homebrew app (not POPStarter). */
   get isElfApp(): boolean {
     return this.game?.system === 'APPS' && !this.game?.isPs1Launcher;
   }
 
-  /**
-   * Boolean array of length 5 for the star-rating template.
-   *
-   * Each entry is `true` (filled star) or `false` (empty) based on
-   * `ratingValue`.  Generated so the template can iterate with `@for`.
-   */
+  get supportsOplSettings(): boolean {
+    return !!this.game?.gameId && this.game?.system !== 'APPS';
+  }
+
+  get vmcCards() {
+    return this._vmc.cards;
+  }
+
+  get enabledCompatCount(): number {
+    return this.compatModes.filter((mode) => this.isCompatEnabled(mode.bit)).length;
+  }
+
+  isCompatEnabled(bit: number): boolean {
+    return (this.compatValue & (1 << bit)) !== 0;
+  }
+
+  toggleCompat(bit: number): void {
+    this.compatValue ^= (1 << bit);
+    this.cfgMessage = '';
+    this.cfgError = '';
+  }
+
+  resetOplSettings(): void {
+    this.compatValue = 0;
+    this.vmc0 = '';
+    this.vmc1 = '';
+    this.cfgMessage = 'OPL-specific fields reset locally. Save to apply.';
+    this.cfgError = '';
+  }
+
+  async saveOplSettings(): Promise<void> {
+    if (!this.game?.gameId) return;
+    this.cfgSaving = true;
+    this.cfgMessage = '';
+    this.cfgError = '';
+
+    const next: GameCfg = { ...this.cfgEntries };
+    if (this.compatValue) next[CFG_KEY_COMPAT] = String(this.compatValue);
+    else delete next[CFG_KEY_COMPAT];
+
+    if (this.vmc0.trim()) next[CFG_KEY_VMC0] = this.vmc0.trim();
+    else delete next[CFG_KEY_VMC0];
+
+    if (this.vmc1.trim()) next[CFG_KEY_VMC1] = this.vmc1.trim();
+    else delete next[CFG_KEY_VMC1];
+
+    try {
+      const ok = await this._cfg.saveGameCfg(this.game.gameId, next);
+      if (!ok) throw new Error('Could not save the game CFG.');
+      this.cfgEntries = next;
+      this.cfgMessage = 'OPL settings saved. Existing unknown CFG keys were preserved.';
+    } catch (error: any) {
+      this.cfgError = error?.message || String(error);
+    } finally {
+      this.cfgSaving = false;
+      this._cdr.detectChanges();
+    }
+  }
+
   get ratingStars(): boolean[] {
     const r = Math.round(this.ratingValue);
     return [1, 2, 3, 4, 5].map((i) => i <= r);
   }
 
-  /**
-   * Number of players, extracted from the raw players string and clamped
-   * to 1–4.  Used to render the correct number of filled user icons.
-   *
-   * Examples: `"1-4"` → 4, `"2"` → 2, `""` → 0.
-   */
   get playersCount(): number {
     if (!this.players) return 0;
     const m = this.players.match(/(\d+)/);
@@ -266,15 +248,6 @@ export class DetailsComponent {
     return Math.min(Math.max(n, 1), 4);
   }
 
-  /**
-   * Convert a raw `Rating` / `RatingText` CFG value to a numeric score (0–5).
-   *
-   * Handles both formats defined in the CFG Editor Docs:
-   * - `Rating=rating/<number>` — strips the `rating/` prefix
-   * - `RatingText=<number>` — used as-is
-   *
-   * Non-numeric or missing input returns 0.
-   */
   private parseRating(raw: string): number {
     if (!raw) return 0;
     const trimmed = raw.trim();
@@ -284,10 +257,6 @@ export class DetailsComponent {
     return !isNaN(num) ? Math.min(Math.max(num, 0), 5) : 0;
   }
 
-  /**
-   * Find the first artwork of the given type and return it as a base64 data URL.
-   * Returns `null` if no matching artwork exists.
-   */
   private findBase64Art(art: gameArt[], type: string): string | null {
     const found = art.find((a) => a.type?.toUpperCase() === type.toUpperCase());
     return found ? this.artDataUrl(found) : null;
@@ -299,11 +268,6 @@ export class DetailsComponent {
     return `data:${mime};base64,${art.base64}`;
   }
 
-  /**
-   * Full launcher path for PS1 POPStarter games, using the OS-native path
-   * separator.  Returns `null` for non-PS1-launcher games.
-   * E.g. `"APPS\MyGame\LAUNCH.ELF"`
-   */
   get launcherFullPath(): string | null {
     const g = this.game;
     if (!g?.isPs1Launcher || !g.ps1LauncherPath) return null;
@@ -313,7 +277,6 @@ export class DetailsComponent {
       : g.ps1LauncherPath;
   }
 
-  /** Navigate back to the library, preserving the active system tab. */
   back() {
     if (this.game) {
       const system = this.game.system ?? 'PS2';
