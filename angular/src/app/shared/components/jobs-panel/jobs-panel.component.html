@@ -74,12 +74,16 @@
         </div>
 
         @if (job.status === 'running') {
+        <div class="mt-2 flex items-center justify-between text-[0.67rem] text-base-content/55">
+          <span>Progress</span>
+          <span class="font-mono font-semibold text-base-content/80">{{ job.percent.toFixed(0) }}%</span>
+        </div>
         <progress
-          class="progress progress-primary mt-2 h-1.5 w-full"
+          class="progress progress-primary mt-1 h-2 w-full"
           [value]="job.percent"
           max="100"
         ></progress>
-        <p class="mt-1 truncate text-[0.68rem] text-base-content/55">{{ job.stage }}</p>
+        <p class="mt-1.5 break-words text-[0.68rem] leading-snug text-base-content/60">{{ job.stage }}</p>
         } @else if (job.status === 'queued') {
         <p class="mt-1 text-[0.68rem] text-base-content/45">Queued</p>
         } @else if (job.status === 'success') {

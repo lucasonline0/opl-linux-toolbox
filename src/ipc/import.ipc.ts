@@ -23,6 +23,7 @@ export function registerImportIpc(): void {
         signal: controller.signal,
         onStage: (stage) => event.sender.send("safe-import-progress", { jobId, stage }),
         onCopyProgress: (progress) => event.sender.send("safe-import-progress", { jobId, ...progress }),
+        onUlProgress: (progress) => event.sender.send("safe-import-progress", { jobId, ...progress }),
       });
     } finally { activeImports.delete(jobId); }
   });
