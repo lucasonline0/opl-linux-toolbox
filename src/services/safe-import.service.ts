@@ -4,7 +4,7 @@ import os from "os";
 import fsSync from "fs";
 import { planPs2Import, ImportPlan } from "./import-planner.service";
 import { safeCopyFile, CopyProgress } from "./safe-copy.service";
-import { convertIsoToUl } from "./ul-conversion.service";
+import { convertIsoToUl, UlTransferProgress } from "./ul-conversion.service";
 import { streamZsoContents } from "./zso.service";
 import { sanitizeGameFilename } from "../utils/sanitize";
 import { requireGameId } from "../utils/game-id";
@@ -52,7 +52,12 @@ async function inflateZso(zsoPath: string, signal?: AbortSignal, onProgress?: (m
 
 export async function runSafeImport(
   request: SafeImportRequest,
-  options: { signal?: AbortSignal; onCopyProgress?: (progress: CopyProgress) => void; onStage?: (stage: string) => void } = {},
+  options: {
+    signal?: AbortSignal;
+    onCopyProgress?: (progress: CopyProgress) => void;
+    onUlProgress?: (progress: UlTransferProgress) => void;
+    onStage?: (stage: string) => void;
+  } = {},
 ): Promise<{ success: boolean; message: string; plan: ImportPlan; path?: string }> {
   const preflight = await preflightSafeImport(request);
   if (preflight.sizeBytes > (await fs.statfs(request.oplRoot)).bavail * (await fs.statfs(request.oplRoot)).bsize) {
@@ -77,10 +82,11 @@ export async function runSafeImport(
       isoPath = inflated.path;
       cleanup = inflated.cleanup;
     }
-    options.onStage?.("Converting to USBExtreme / UL");
+    options.onStage?.("Preparing USBExtreme / UL conversion");
     const converted = await convertIsoToUl(isoPath, request.oplRoot, request.gameName, request.gameId, request.media || "DVD", {
       signal: options.signal,
       onProgress: options.onStage,
+      onTransferProgress: options.onUlProgress,
     });
     return { success: converted.success, message: converted.message, plan: preflight, path: converted.files?.[0] };
   } finally { await cleanup?.(); }
