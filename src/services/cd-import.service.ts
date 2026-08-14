@@ -58,19 +58,22 @@ async function binToIso(
     return;
   }
 
-  const stat = await fs.stat(binPath);
-  const totalSectors = Math.floor(stat.size / RAW_SECTOR_SIZE);
-  log.verbose(
-    `BIN→ISO: extracting 2048B/sector from ${formatBytes(stat.size)} (${totalSectors} sectors)`
-  );
-  if (totalSectors === 0) {
-    throw new Error("BIN file is empty or smaller than one sector.");
-  }
-
   const inHandle = await fs.open(binPath, "r");
-  const outHandle = await fs.open(isoPath, "w");
+  let outHandle: Awaited<ReturnType<typeof fs.open>> | undefined;
 
   try {
+    // Derive metadata from the already-open handle so the file cannot be
+    // swapped between a path-based stat() check and the subsequent read.
+    const stat = await inHandle.stat();
+    const totalSectors = Math.floor(stat.size / RAW_SECTOR_SIZE);
+    log.verbose(
+      `BIN→ISO: extracting 2048B/sector from ${formatBytes(stat.size)} (${totalSectors} sectors)`
+    );
+    if (totalSectors === 0) {
+      throw new Error("BIN file is empty or smaller than one sector.");
+    }
+
+    outHandle = await fs.open(isoPath, "w");
     const readBuffer = Buffer.alloc(COPY_BUFFER_BYTES);
     const sectorsPerChunk = Math.floor(COPY_BUFFER_BYTES / RAW_SECTOR_SIZE);
     const writeBuffer = Buffer.alloc(sectorsPerChunk * ISO_SECTOR_SIZE);
@@ -117,7 +120,7 @@ async function binToIso(
     }
   } finally {
     await inHandle.close();
-    await outHandle.close();
+    if (outHandle) await outHandle.close();
   }
 }
 
