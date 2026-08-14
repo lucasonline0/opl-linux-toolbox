@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "concurrently": "^10.0.4",
-    "electron": "^34.5.8",
+    "electron": "^43.4.0",
     "electron-builder": "^25.1.8",
     "electron-rebuild": "^3.2.9",
     "ts-node": "^10.9.2",
