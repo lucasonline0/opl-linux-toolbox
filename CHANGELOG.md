@@ -10,6 +10,23 @@ The project follows semantic versioning where practical. GitHub Releases remain 
 
 - Continue improving Linux storage integration, library diagnostics and OPL-aware workflows.
 
+## [1.4.1] - 2026-08-14
+
+### Highlights
+
+- Fixed PS2 FAT32 / USBExtreme imports appearing frozen while `iso2opl` was still writing data to the destination drive.
+- Added reliable UL transfer progress based on the actual bytes written to newly created `ul.*` chunks instead of relying on buffered `iso2opl` console output.
+- Import Jobs now shows an explicit percentage plus transferred size, total size, throughput and ETA during UL conversion.
+- Increased progress-bar visibility and allowed transfer details to wrap instead of being truncated.
+
+### Quality and security
+
+- Added automated tests for UL byte accounting, progress bounds, throughput and ETA calculations.
+- Expanded pull-request CI with Electron/TypeScript build validation, Angular production build, core tests, shell-script syntax checks, bundled-helper checks and an AppImage packaging smoke test.
+- Added CodeQL JavaScript/TypeScript scanning on pull requests, `main` and a weekly schedule.
+- Added dependency review for pull requests, blocking newly introduced high-severity dependency vulnerabilities.
+- Added Dependabot coverage for root npm dependencies, Angular dependencies and GitHub Actions.
+
 ## [1.4.0] - 2026-08-12
 
 ### Highlights
@@ -65,5 +82,6 @@ Release assets include:
 - `opl-linux-toolbox-1.3.9-x86_64.pacman`
 - `SHA256SUMS`
 
+[1.4.1]: https://github.com/lucasonline0/opl-linux-toolbox/releases/tag/v1.4.1
 [1.4.0]: https://github.com/lucasonline0/opl-linux-toolbox/releases/tag/v1.4.0
 [1.3.9]: https://github.com/lucasonline0/opl-linux-toolbox/releases/tag/v1.3.9
