@@ -38,7 +38,7 @@ function createWindow() {
     minWidth: size.minWidth,
     minHeight: size.minHeight,
     title: `${APP_CONFIG.name} (${PackageInfo.version})`,
-    icon: path.join(__dirname, "assets", "applogo", "icon_512x512.png"),
+    icon: path.join(app.getAppPath(), "assets", "applogo", "icon_512x512.png"),
     frame: isMac,
     transparent: !isMac,
     backgroundColor: isMac ? "#090b11" : "#00000000",
