@@ -26,13 +26,14 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout validated commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -50,7 +51,7 @@ jobs:
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
 
-          if git ls-remote --exit-code --tags origin "refs/tags/$release_tag" >/dev/null 2>&1; then
+          if git ls-remote --exit-code --tags https://github.com/${GITHUB_REPOSITORY}.git "refs/tags/$release_tag" >/dev/null 2>&1; then
             echo "Release tag $release_tag already exists; nothing to publish."
             echo "should_release=false" >> "$GITHUB_OUTPUT"
           else
@@ -60,8 +61,6 @@ jobs:
 
       - name: Install Electron dependencies
         if: steps.release_meta.outputs.should_release == 'true'
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
         run: npm ci
 
       - name: Install Angular dependencies
