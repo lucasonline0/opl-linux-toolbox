@@ -39,7 +39,7 @@
     "electron-rebuild": "^3.2.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "wait-on": "^8.0.4"
+    "wait-on": "^9.1.0"
   },
   "dependencies": {
     "electron-reloader": "^1.2.3",
