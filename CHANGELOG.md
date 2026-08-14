@@ -24,7 +24,7 @@ The project follows semantic versioning where practical. GitHub Releases remain 
 - Added automated tests for UL byte accounting, progress bounds, throughput and ETA calculations.
 - Expanded pull-request CI with Electron/TypeScript build validation, Angular production build, core tests, shell-script syntax checks, bundled-helper checks and an AppImage packaging smoke test.
 - Added CodeQL JavaScript/TypeScript scanning on pull requests, `main` and a weekly schedule.
-- Added dependency review for pull requests, blocking newly introduced high-severity dependency vulnerabilities.
+- Added blocking high-severity audits for Electron and Angular production dependencies on pull requests, `main` and a weekly schedule.
 - Added Dependabot coverage for root npm dependencies, Angular dependencies and GitHub Actions.
 
 ## [1.4.0] - 2026-08-12
