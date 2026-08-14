@@ -1,28 +1,42 @@
-name: Dependency Review
+name: Runtime Dependency Audit
 
 on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '31 4 * * 1'
 
 permissions:
   contents: read
 
 concurrency:
-  group: dependency-review-${{ github.ref }}
+  group: runtime-dependency-audit-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  review:
-    name: Review dependency changes
+  audit:
+    name: Audit production dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
-          fail-on-severity: high
-          deny-licenses: AGPL-1.0-only, AGPL-1.0-or-later
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            angular/package-lock.json
+
+      - name: Audit Electron runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit Angular runtime dependencies
+        run: npm --prefix angular audit --omit=dev --audit-level=high
