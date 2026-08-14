@@ -30,8 +30,14 @@ jobs:
           cache: npm
           cache-dependency-path: angular/package-lock.json
 
-      - name: Refresh safe Angular lockfile updates
-        run: npm --prefix angular audit fix --package-lock-only --omit=dev
+      - name: Refresh safe dependency lock updates
+        shell: bash
+        run: |
+          set +e
+          npm --prefix angular audit fix --package-lock-only
+          status=$?
+          echo "npm audit fix exit code: $status"
+          exit 0
 
       - name: Require clean production dependency audit
         run: npm --prefix angular audit --omit=dev --audit-level=high
