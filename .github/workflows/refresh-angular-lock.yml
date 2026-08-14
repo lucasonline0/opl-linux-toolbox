@@ -30,14 +30,8 @@ jobs:
           cache: npm
           cache-dependency-path: angular/package-lock.json
 
-      - name: Refresh safe dependency lock updates
-        shell: bash
-        run: |
-          set +e
-          npm --prefix angular audit fix --package-lock-only
-          status=$?
-          echo "npm audit fix exit code: $status"
-          exit 0
+      - name: Resolve patched Angular dependency graph
+        run: npm install --prefix angular --package-lock-only --ignore-scripts
 
       - name: Require clean production dependency audit
         run: npm --prefix angular audit --omit=dev --audit-level=high
@@ -56,5 +50,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add angular/package-lock.json
-          git commit -m "chore: refresh vulnerable Angular dependencies"
+          git commit -m "chore: refresh Angular dependency lock"
           git push origin "HEAD:${GITHUB_HEAD_REF}"
