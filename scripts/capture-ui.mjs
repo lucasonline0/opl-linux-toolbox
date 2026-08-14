@@ -35,7 +35,9 @@ function send(method, params = {}) {
 await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
 const actualRoute = route === 'store-details' ? 'store/SLUS_202.28' : route === 'free-store' ? 'store' : route === 'free-store-modal' || route === 'free-store-progress' ? 'store/free/supertux-ps2' : route === 'settings-sources' ? 'settings' : route.startsWith('store-search-') ? 'store' : route;
-await send('Runtime.evaluate', { expression: `location.hash = '#/${actualRoute}'`, awaitPromise: true });
+const rendererUrl = new URL(page.url);
+rendererUrl.hash = `#/${actualRoute}`;
+await send('Page.navigate', { url: rendererUrl.toString() });
 await new Promise((resolve) => setTimeout(resolve, route.startsWith('store') ? 5000 : 1400));
 if (route.startsWith('store-search-')) {
   const query = route === 'store-search-serial' ? 'SLUS-20228' : 'Silent Hill';

@@ -145,14 +145,16 @@ export async function getULGames(dirPath: string) {
   try {
     const ulCfgPath = path.join(dirPath, "ul.cfg");
 
+    let buffer: Buffer;
     try {
-      await fs.access(ulCfgPath);
-    } catch {
-      log.verbose(`No ul.cfg in ${dirPath} — no UL (split) games present`);
-      return { success: true, data: [] };
+      buffer = await fs.readFile(ulCfgPath);
+    } catch (err: any) {
+      if (err?.code === "ENOENT" || err?.code === "EACCES" || err?.code === "EPERM") {
+        log.verbose(`No readable ul.cfg in ${dirPath} — no UL (split) games present`);
+        return { success: true, data: [] };
+      }
+      throw err;
     }
-
-    const buffer = await fs.readFile(ulCfgPath);
     const RECORD_SIZE = 64;
 
     if (buffer.length === 0) {
