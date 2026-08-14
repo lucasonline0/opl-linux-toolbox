@@ -1,6 +1,6 @@
 {
   "name": "opl-linux-toolbox",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Safe Linux-first desktop manager for Open PS2 Loader libraries.",
   "main": "dist/src/main.js",
   "author": "lucasonline0",
@@ -27,9 +27,10 @@
     "package:all": "npm run remove && npm run build:info && cd angular && npm run build --omit=dev && cd .. && npm run build && PATH=\"$(brew --prefix binutils 2>/dev/null)/bin:$PATH\" electron-builder --win --mac --linux && node scripts/collect-distributables.js",
     "remove": "rimraf -rf ./dist && rimraf -rf ./build",
     "electron": "electron",
-    "test:core": "npm run build && node dist/src/tests/core.test.js",
+    "test:core": "npm run build && node --test dist/src/tests/core.test.js dist/src/tests/ul-progress.test.js",
     "test:live-art": "npm run build && node dist/src/tests/artwork-live.js",
-    "test:live-ul": "npm run build && node dist/src/tests/ul-live-smoke.js"
+    "test:live-ul": "npm run build && node dist/src/tests/ul-live-smoke.js",
+    "check:shell": "bash -n install.sh uninstall.sh scripts/setup.sh"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
