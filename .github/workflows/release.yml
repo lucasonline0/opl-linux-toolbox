@@ -1,78 +1,91 @@
 name: Linux release
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
-    tags:
-      - 'v*'
-    paths:
-      - package.json
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: linux-release-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - name: Checkout
+      - name: Checkout validated commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            angular/package-lock.json
 
-      - name: Resolve and validate release version
+      - name: Resolve release version
+        id: release_meta
         shell: bash
         run: |
           set -euo pipefail
           package_version="$(node -p "require('./package.json').version")"
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            release_tag="${GITHUB_REF_NAME}"
-            tag_version="${release_tag#v}"
-            if [ "$tag_version" != "$package_version" ]; then
-              echo "Tag $release_tag does not match package.json version $package_version" >&2
-              exit 1
-            fi
+          release_tag="v${package_version}"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$release_tag" >/dev/null 2>&1; then
+            echo "Release tag $release_tag already exists; nothing to publish."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
           else
-            release_tag="v${package_version}"
+            echo "Preparing new release $release_tag from validated commit $GITHUB_SHA"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
-          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
 
       - name: Install Electron dependencies
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci && break
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            rm -rf node_modules
-            sleep 3
-          done
+        if: steps.release_meta.outputs.should_release == 'true'
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci
 
       - name: Install Angular dependencies
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            npm ci --prefix angular && break
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            rm -rf angular/node_modules
-            sleep 3
-          done
+        if: steps.release_meta.outputs.should_release == 'true'
+        run: npm ci --prefix angular
 
       - name: Generate build metadata
+        if: steps.release_meta.outputs.should_release == 'true'
         run: npm run build:info
 
       - name: Build Angular
+        if: steps.release_meta.outputs.should_release == 'true'
         run: npm run build --prefix angular --omit=dev
 
       - name: Build Electron TypeScript
+        if: steps.release_meta.outputs.should_release == 'true'
         run: npm run build
 
+      - name: Re-run release-critical tests
+        if: steps.release_meta.outputs.should_release == 'true'
+        run: node --test dist/src/tests/core.test.js dist/src/tests/ul-progress.test.js
+
       - name: Build Linux packages
+        if: steps.release_meta.outputs.should_release == 'true'
         run: |
           set -euo pipefail
           sudo apt-get update
@@ -85,6 +98,7 @@ jobs:
           done
 
       - name: Generate SHA256SUMS
+        if: steps.release_meta.outputs.should_release == 'true'
         run: |
           set -euo pipefail
           cd build
@@ -94,11 +108,12 @@ jobs:
           test -s SHA256SUMS
 
       - name: Publish GitHub Release
+        if: steps.release_meta.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          target_commitish: ${{ github.sha }}
-          name: ${{ env.RELEASE_TAG }}
+          tag_name: ${{ steps.release_meta.outputs.release_tag }}
+          target_commitish: ${{ github.event.workflow_run.head_sha || github.sha }}
+          name: ${{ steps.release_meta.outputs.release_tag }}
           generate_release_notes: true
           files: |
             build/*.deb
