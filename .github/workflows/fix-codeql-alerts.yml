@@ -1,0 +1,101 @@
+name: Apply CodeQL security fixes
+
+on:
+  push:
+    branches:
+      - fix/codeql-alerts
+    paths:
+      - .github/workflows/fix-codeql-alerts.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/codeql-alerts
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply minimal security patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"expected vulnerable block not found in {path}")
+              if text.count(old) != 1:
+                  raise SystemExit(f"vulnerable block was not unique in {path}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace_exact(
+              "src/services/library.service.ts",
+              '''    try {\n      await fs.access(ulCfgPath);\n    } catch {\n      log.verbose(`No ul.cfg in ${dirPath} — no UL (split) games present`);\n      return { success: true, data: [] };\n    }\n\n    const buffer = await fs.readFile(ulCfgPath);''',
+              '''    let buffer: Buffer;\n    try {\n      buffer = await fs.readFile(ulCfgPath);\n    } catch (err: any) {\n      if (err?.code === "ENOENT" || err?.code === "EACCES" || err?.code === "EPERM") {\n        log.verbose(`No readable ul.cfg in ${dirPath} — no UL (split) games present`);\n        return { success: true, data: [] };\n      }\n      throw err;\n    }'''
+          )
+
+          replace_exact(
+              "src/services/cd-import.service.ts",
+              '''  const stat = await fs.stat(binPath);\n  const totalSectors = Math.floor(stat.size / RAW_SECTOR_SIZE);\n  log.verbose(\n    `BIN→ISO: extracting 2048B/sector from ${formatBytes(stat.size)} (${totalSectors} sectors)`\n  );\n  if (totalSectors === 0) {\n    throw new Error("BIN file is empty or smaller than one sector.");\n  }\n\n  const inHandle = await fs.open(binPath, "r");\n  const outHandle = await fs.open(isoPath, "w");\n\n  try {''',
+              '''  const inHandle = await fs.open(binPath, "r");\n  let outHandle: Awaited<ReturnType<typeof fs.open>> | undefined;\n\n  try {\n    // Derive metadata from the already-open handle so the file cannot be\n    // swapped between a path-based stat() check and the subsequent read.\n    const stat = await inHandle.stat();\n    const totalSectors = Math.floor(stat.size / RAW_SECTOR_SIZE);\n    log.verbose(\n      `BIN→ISO: extracting 2048B/sector from ${formatBytes(stat.size)} (${totalSectors} sectors)`\n    );\n    if (totalSectors === 0) {\n      throw new Error("BIN file is empty or smaller than one sector.");\n    }\n\n    outHandle = await fs.open(isoPath, "w");'''
+          )
+
+          replace_exact(
+              "src/services/cd-import.service.ts",
+              '''  } finally {\n    await inHandle.close();\n    await outHandle.close();\n  }''',
+              '''  } finally {\n    await inHandle.close();\n    if (outHandle) await outHandle.close();\n  }'''
+          )
+
+          replace_exact(
+              "scripts/capture-ui.mjs",
+              '''await send('Runtime.evaluate', { expression: `location.hash = '#/${actualRoute}'`, awaitPromise: true });''',
+              '''const rendererUrl = new URL(page.url);\nrendererUrl.hash = `#/${actualRoute}`;\nawait send('Page.navigate', { url: rendererUrl.toString() });'''
+          )
+          PY
+
+      - name: Verify security boundaries statically
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -F 'await fs.access(ulCfgPath)' src/services/library.service.ts
+          ! grep -F 'const stat = await fs.stat(binPath);' src/services/cd-import.service.ts
+          ! grep -F "location.hash = '#/\${actualRoute}'" scripts/capture-ui.mjs
+          grep -F 'const stat = await inHandle.stat();' src/services/cd-import.service.ts
+          grep -F "await send('Page.navigate', { url: rendererUrl.toString() });" scripts/capture-ui.mjs
+          git diff --check
+          node --check scripts/capture-ui.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Electron TypeScript
+        run: npm run build
+
+      - name: Run core regression tests
+        run: npm run test:core
+
+      - name: Commit verified fix and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-codeql-alerts.yml
+          git add src/services/library.service.ts src/services/cd-import.service.ts scripts/capture-ui.mjs
+          git diff --cached --check
+          git commit -m "fix(security): resolve CodeQL filesystem races and injection"
+          git push origin HEAD:fix/codeql-alerts
