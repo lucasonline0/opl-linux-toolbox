@@ -6,14 +6,20 @@ on:
       - main
   push:
     branches:
-      - 'agent/**'
+      - main
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
+    name: Build, tests and static checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,32 +29,79 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            angular/package-lock.json
 
       - name: Install Electron dependencies
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            npm ci && break
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            rm -rf node_modules
-            sleep 3
-          done
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci
 
       - name: Install Angular dependencies
+        run: npm ci --prefix angular
+
+      - name: Validate shell scripts
+        run: npm run check:shell
+
+      - name: Validate bundled helpers
         run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            npm ci --prefix angular && break
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            rm -rf angular/node_modules
-            sleep 3
-          done
+          test -x assets/bin/iso2opl
+          test -s assets/bin/iso2opl.NOTICE.txt
+          test -s LICENSE
+          test -s THIRD_PARTY_NOTICES.md
 
       - name: Generate build metadata
         run: npm run build:info
 
+      - name: Build Electron TypeScript
+        run: npm run build
+
+      - name: Run core tests
+        run: node --test dist/src/tests/core.test.js dist/src/tests/ul-progress.test.js
+
       - name: Build Angular
         run: npm run build --prefix angular --omit=dev
 
-      - name: Run core tests and build Electron
-        run: npm run test:core
+      - name: Check package contents
+        run: npm pack --dry-run --ignore-scripts
+
+  package-smoke:
+    name: Linux AppImage packaging smoke test
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            angular/package-lock.json
+
+      - name: Install Electron dependencies
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci
+
+      - name: Install Angular dependencies
+        run: npm ci --prefix angular
+
+      - name: Build application
+        run: |
+          npm run build:info
+          npm run build --prefix angular --omit=dev
+          npm run build
+
+      - name: Build AppImage
+        run: npx electron-builder --linux AppImage --publish never
+
+      - name: Validate artifact
+        run: |
+          test -n "$(find build -maxdepth 1 -type f -iname '*.AppImage' -print -quit)"
+          sha256sum build/*.AppImage
