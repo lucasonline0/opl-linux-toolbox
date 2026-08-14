@@ -41,7 +41,13 @@ await send('Page.navigate', { url: rendererUrl.toString() });
 await new Promise((resolve) => setTimeout(resolve, route.startsWith('store') ? 5000 : 1400));
 if (route.startsWith('store-search-')) {
   const query = route === 'store-search-serial' ? 'SLUS-20228' : 'Silent Hill';
-  await send('Runtime.evaluate', { expression: `(() => { const input = document.querySelector('.search-shell input'); if (!input) return false; const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(input, ${JSON.stringify(query)}); input.dispatchEvent(new Event('input', { bubbles: true })); return true; })()` });
+  const focusResult = await send('Runtime.evaluate', {
+    expression: "(() => { const input = document.querySelector('.search-shell input'); if (!(input instanceof HTMLInputElement)) return false; input.focus(); input.select(); return true; })()",
+    returnByValue: true,
+  });
+  if (focusResult.result?.value) {
+    await send('Input.insertText', { text: query });
+  }
   await new Promise((resolve) => setTimeout(resolve, 900));
 }
 if (route === 'free-store') {
@@ -57,8 +63,10 @@ if (route === 'free-store-modal' || route === 'free-store-progress') {
   }
 }
 if (route === 'settings' || route === 'settings-sources') {
-  const section = route === 'settings-sources' ? 'Sources' : 'Appearance';
-  await send('Runtime.evaluate', { expression: `[...document.querySelectorAll('.settings-nav button')].find((button) => button.textContent?.includes('${section}'))?.click()` });
+  const expression = route === 'settings-sources'
+    ? "[...document.querySelectorAll('.settings-nav button')].find((button) => button.textContent?.includes('Sources'))?.click()"
+    : "[...document.querySelectorAll('.settings-nav button')].find((button) => button.textContent?.includes('Appearance'))?.click()";
+  await send('Runtime.evaluate', { expression });
   await new Promise((resolve) => setTimeout(resolve, 350));
 }
 await send('Runtime.evaluate', { expression: 'document.fonts.ready', awaitPromise: true });
