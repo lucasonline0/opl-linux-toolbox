@@ -61,7 +61,7 @@ jobs:
         run: npm run build
 
       - name: Run core tests
-        run: node --test dist/src/tests/core.test.js dist/src/tests/ul-progress.test.js
+        run: node --test dist/src/tests/core.test.js dist/src/tests/ul-progress.test.js dist/src/tests/filename-normalization.test.js
 
       - name: Build Angular
         run: npm run build --prefix angular --omit=dev
