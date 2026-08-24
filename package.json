@@ -33,8 +33,8 @@
     "check:shell": "bash -n install.sh uninstall.sh scripts/setup.sh"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4",
-    "electron": "^43.4.0",
+    "concurrently": "^10.0.5",
+    "electron": "^43.4.1",
     "electron-builder": "^25.1.8",
     "electron-rebuild": "^3.2.9",
     "ts-node": "^10.9.2",
