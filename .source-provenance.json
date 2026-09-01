@@ -1,0 +1,10 @@
+{
+  "format": "source-provenance/v1",
+  "maintainer": "Lucas Madureira (@lucasonline0)",
+  "repository": "lucasonline0/opl-linux-toolbox",
+  "canonical_url": "https://github.com/lucasonline0/opl-linux-toolbox",
+  "fingerprint": "LM-PROV-2026-0B997292B733",
+  "recorded_on": "2026-09-01",
+  "scope": "maintained derivative lineage and modifications",
+  "note": "Upstream authorship and licensing are retained; see LICENSE and THIRD_PARTY_NOTICES.md."
+}
